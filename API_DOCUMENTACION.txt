@@ -1,0 +1,124 @@
+================================================================================
+  CÓMO VER Y PROBAR LAS API — Sistema Hospitalario HNNCJ
+================================================================================
+
+Base URL (con el servidor en marcha):
+  http://127.0.0.1:8888/api/
+
+
+================================================================================
+1. DOCUMENTACIÓN INTERACTIVA (RECOMENDADO)
+================================================================================
+
+Swagger UI (probar endpoints desde el navegador):
+  http://127.0.0.1:8888/api/docs/
+
+ReDoc (misma documentación, otro diseño):
+  http://127.0.0.1:8888/api/redoc/
+
+Esquema OpenAPI (JSON para herramientas):
+  http://127.0.0.1:8888/api/schema/
+
+
+PASOS PARA PROBAR CON SWAGGER
+-----------------------------
+1. Abra http://127.0.0.1:8888/api/docs/
+2. Busque POST /api/auth/login/ → Try it out
+3. Body de ejemplo (use su usuario y la contraseña definida en .env):
+     {
+       "username": "Jramirez",
+       "password": "SU_CONTRASENA_AQUI"
+     }
+4. Copie el valor de "access" de la respuesta.
+5. Clic en el botón "Authorize" (arriba a la derecha).
+6. Escriba:  Bearer  y pegue el token (o solo el token si Swagger lo pide).
+7. Ya puede ejecutar GET /api/pacientes/, /api/citas/, etc.
+
+
+================================================================================
+2. LISTA DE ENDPOINTS PRINCIPALES
+================================================================================
+
+AUTENTICACIÓN
+  POST   /api/auth/login/           Iniciar sesión (devuelve access y refresh)
+  POST   /api/auth/logout/          Cerrar sesión (enviar refresh en body)
+  POST   /api/auth/token/refresh/   Renovar token access
+  GET    /api/auth/perfil/          Datos del usuario conectado
+
+CATÁLOGOS Y BÚSQUEDA
+  GET    /api/catalogos/paciente/   Especialidades, estados, médicos activos
+  GET    /api/registros/buscar/?q=  Buscar pacientes (registros)
+  GET    /api/archivo/buscar/?q=    Buscar expedientes (archivo)
+  GET    /api/archivo/citas/        Citas por fecha y/o especialidad
+
+PACIENTES
+  GET    /api/pacientes/            Listar
+  POST   /api/pacientes/            Crear
+  GET    /api/pacientes/{id}/       Detalle
+  PATCH  /api/pacientes/{id}/       Actualizar
+  DELETE /api/pacientes/{id}/       Eliminar
+  GET    /api/pacientes/{id}/citas_resumen/
+  GET    /api/pacientes/{id}/carnet/
+  GET    /api/pacientes/{id}/hoja_expediente/
+  GET    /api/pacientes/{id}/constancia/
+
+CITAS
+  GET    /api/citas/
+  POST   /api/citas/
+  GET    /api/citas/{id}/
+  PATCH  /api/citas/{id}/
+  DELETE /api/citas/{id}/
+
+MÉDICOS (admin escribe; todos leen)
+  GET    /api/medicos/
+  POST   /api/medicos/              Solo administrador
+
+USUARIOS (solo administrador)
+  GET    /api/usuarios/
+  POST   /api/usuarios/
+  POST   /api/usuarios/{id}/bloquear/
+  POST   /api/usuarios/{id}/reactivar/
+  POST   /api/usuarios/{id}/ver_datos/   Body: {"contrasena_admin": "..."}
+  DELETE /api/usuarios/{id}/
+
+REGISTRO DIARIO
+  GET    /api/registro-diario/?fecha=2026-05-23
+  POST   /api/registro-diario/
+  PUT    /api/registro-diario/?fecha=...   Genera PDF
+
+OTROS
+  GET    /api/bitacora/             Solo admin
+  GET    /api/estadistica/resumen_tablas/
+  GET    /api/estadistica/exportar_excel/
+  GET    /api/vas/                  Solo jurídico
+  POST   /api/respaldo/             Solo admin
+
+
+================================================================================
+3. CABECERA DE AUTORIZACIÓN
+================================================================================
+
+Todas las rutas (excepto login) requieren:
+
+  Authorization: Bearer <token_access>
+
+Ejemplo en PowerShell (reemplace SU_CONTRASENA_AQUI por la de INIT_PASS_ADMIN en .env):
+  $body = '{"username":"Jramirez","password":"SU_CONTRASENA_AQUI"}'
+  $login = Invoke-RestMethod -Uri "http://127.0.0.1:8888/api/auth/login/" `
+    -Method POST -ContentType "application/json" -Body $body
+  $headers = @{ Authorization = "Bearer $($login.access)" }
+  Invoke-RestMethod -Uri "http://127.0.0.1:8888/api/pacientes/" -Headers $headers
+
+
+================================================================================
+4. HERRAMIENTAS EXTERNAS
+================================================================================
+
+  Postman  — importar http://127.0.0.1:8888/api/schema/
+  Insomnia — igual, importar esquema OpenAPI
+  curl     — línea de comandos con -H "Authorization: Bearer ..."
+
+
+================================================================================
+  Fin — API_DOCUMENTACION.txt
+================================================================================

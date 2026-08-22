@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block titulo %}Ingreso — Hospital Nicolasa Cruz Jalapa{% endblock %}
+{% block contenido %}
+<div class="login-contenedor">
+    <div class="login-tarjeta">
+        <img src="/logo/" alt="Logo institucional" class="logo-institucional">
+        <h1 class="titulo-hospital">Hospital Nacional<br>Nicolasa Cruz Jalapa</h1>
+        <p class="subtitulo">Sistema de Registro de Pacientes</p>
+        <form id="formLogin" autocomplete="off">
+            <div class="mb-3">
+                <label class="form-label">Usuario</label>
+                <input type="text" class="form-control" id="usuario" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="password" required>
+            </div>
+            <div id="errorLogin" class="alert alert-danger d-none"></div>
+            <button type="submit" class="btn btn-primario w-100">Iniciar sesión</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('formLogin').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const err = document.getElementById('errorLogin');
+    err.classList.add('d-none');
+    try {
+        const data = await API.login(
+            document.getElementById('usuario').value,
+            document.getElementById('password').value
+        );
+        API.guardarSesion(data);
+        window.location.href = '/panel/';
+    } catch (ex) {
+        Aviso.mostrar(ex.message || 'Error de acceso.');
+    }
+});
+if (API.token()) window.location.href = '/panel/';
+</script>
+{% endblock %}

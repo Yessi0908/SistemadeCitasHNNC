@@ -1,0 +1,346 @@
+/* Paleta institucional: negro, blanco, azul */
+:root {
+    --azul: #003366;
+    --azul-claro: #005599;
+    --negro: #111111;
+    --blanco: #ffffff;
+    --gris: #f4f6f8;
+    --borde: #d0d7de;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: var(--gris);
+    color: var(--negro);
+    font-size: 14px;
+}
+
+/* Login */
+.login-contenedor {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--blanco);
+}
+
+.login-tarjeta {
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    border: 1px solid var(--borde);
+    text-align: center;
+}
+
+.logo-institucional {
+    width: 100px;
+    height: auto;
+    margin-bottom: 1rem;
+}
+
+.titulo-hospital {
+    font-size: 1.1rem;
+    color: var(--azul);
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.subtitulo {
+    color: #555;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Botones */
+.btn-primario {
+    background: var(--azul);
+    color: var(--blanco);
+    border: none;
+}
+.btn-primario:hover { background: var(--azul-claro); color: var(--blanco); }
+
+.btn-secundario {
+    background: var(--blanco);
+    color: var(--azul);
+    border: 1px solid var(--azul);
+}
+
+.btn-outline-claro {
+    color: var(--blanco);
+    border-color: var(--blanco);
+}
+
+/* Barra superior */
+.barra-superior {
+    background: var(--azul);
+    color: var(--blanco);
+    padding: 0.6rem 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-barra { width: 36px; height: auto; }
+.nombre-sistema { font-weight: 600; font-size: 0.95rem; }
+.badge-rol {
+    background: var(--blanco);
+    color: var(--azul);
+    padding: 0.2rem 0.6rem;
+    font-size: 0.75rem;
+    border-radius: 3px;
+}
+
+/* Panel */
+.contenedor-panel { display: flex; min-height: calc(100vh - 52px); }
+
+.menu-lateral {
+    width: 220px;
+    background: var(--blanco);
+    border-right: 1px solid var(--borde);
+    padding: 1rem 0;
+}
+
+.menu-lateral button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.55rem 1rem;
+    border: none;
+    background: none;
+    color: var(--negro);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.menu-lateral button:hover,
+.menu-lateral button.activo {
+    background: var(--gris);
+    color: var(--azul);
+    font-weight: 600;
+}
+
+.area-trabajo {
+    flex: 1;
+    padding: 1.2rem 1.5rem;
+    overflow: auto;
+}
+
+.seccion-oculta { display: none; }
+.seccion-activa { display: block; }
+
+h2 {
+    color: var(--azul);
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--azul);
+    padding-bottom: 0.3rem;
+}
+
+.tabla-sistema {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--blanco);
+    font-size: 0.85rem;
+}
+
+.tabla-sistema th {
+    background: var(--azul);
+    color: var(--blanco);
+    padding: 0.5rem;
+    text-align: left;
+}
+
+.tabla-sistema td {
+    padding: 0.45rem 0.5rem;
+    border-bottom: 1px solid var(--borde);
+}
+
+.tabla-sistema tr:hover { background: #eef3f8; }
+
+.formulario-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    max-width: 900px;
+}
+
+.formulario-grid label { font-size: 0.8rem; color: #333; }
+.formulario-grid input, .formulario-grid select {
+    width: 100%;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--borde);
+    background: var(--blanco);
+}
+
+.formulario-grid select {
+    cursor: pointer;
+}
+
+.texto-ayuda { font-size: 0.8rem; color: #666; }
+.texto-error { color: #b00020; font-size: 0.9rem; }
+
+.bloque-busqueda {
+    padding: 0.75rem;
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+}
+
+.grupo-botones-form { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.btn-peligro {
+    background: #8b0000;
+    color: var(--blanco);
+    border: none;
+}
+.btn-peligro:hover { background: #a30000; color: var(--blanco); }
+
+.oculto { display: none !important; }
+.btn-eliminar-paciente:not(.oculto) { display: inline-block; }
+
+.panel-citas-paciente {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+    border-top: 3px solid var(--azul);
+}
+
+.panel-citas-encabezado { margin-bottom: 0.75rem; }
+.panel-citas-titulo {
+    font-size: 1rem;
+    color: var(--azul);
+    margin: 0 0 0.25rem 0;
+    border: none;
+    padding: 0;
+}
+.panel-citas-subtitulo { margin: 0; }
+
+.panel-citas-doble {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.panel-citas-col h4 {
+    font-size: 0.95rem;
+    color: var(--azul);
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--borde);
+    padding-bottom: 0.25rem;
+}
+
+@media (max-width: 768px) {
+    .panel-citas-doble { grid-template-columns: 1fr; }
+}
+
+.bloque-edad-auto {
+    grid-column: 1 / -1;
+    padding: 0.65rem 0.75rem;
+    background: var(--gris);
+    border: 1px solid var(--borde);
+    border-left: 3px solid var(--azul);
+}
+
+.bloque-edad-auto .edad-valor {
+    font-weight: 600;
+    color: var(--azul);
+}
+
+.celda-nombre-edad .nombre-linea { display: block; }
+.celda-nombre-edad .edad-linea {
+    display: block;
+    font-size: 0.78rem;
+    color: #555;
+    margin-top: 0.15rem;
+}
+
+.tarjeta-formulario {
+    padding: 1rem;
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+}
+
+.formulario-cita {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    max-width: 720px;
+}
+
+.formulario-cita .col-span-2 { grid-column: span 2; }
+
+.input-grupo {
+    display: flex;
+    gap: 0.5rem;
+}
+.input-grupo .form-control { flex: 1; }
+
+@media (max-width: 768px) {
+    .formulario-cita { grid-template-columns: 1fr; }
+    .formulario-cita .col-span-2 { grid-column: span 1; }
+}
+
+/* Modal aviso */
+.modal-aviso {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-aviso-fondo {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.modal-aviso-caja {
+    position: relative;
+    z-index: 1;
+    background: var(--blanco);
+    border: 2px solid var(--azul);
+    padding: 1.25rem 1.5rem;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.modal-aviso-titulo {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--azul);
+    margin: 0 0 0.75rem 0;
+}
+
+.modal-aviso-mensaje {
+    margin: 0 0 1rem 0;
+    color: var(--negro);
+    font-size: 0.95rem;
+    line-height: 1.4;
+    white-space: pre-line;
+}
+
+.modal-aviso-botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+}
+.nota-modulo { font-size: 0.85rem; color: #444; }
+
+.form-control:focus {
+    border-color: var(--azul);
+    box-shadow: 0 0 0 0.15rem rgba(0, 51, 102, 0.2);
+}
+
+@media (max-width: 768px) {
+    .menu-lateral { width: 100%; }
+    .contenedor-panel { flex-direction: column; }
+    .formulario-grid { grid-template-columns: 1fr; }
+}

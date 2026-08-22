@@ -1,0 +1,454 @@
+================================================================================
+  TECNOLOGÍAS Y BASE DE DATOS — Sistema Hospitalario HNNCJ
+  Hospital Nacional Nicolasa Cruz Jalapa
+================================================================================
+
+Este documento describe las tecnologías del proyecto, las medidas de seguridad,
+dónde está cada cosa y cómo puedes ver o administrar la base de datos.
+
+
+================================================================================
+1. RESUMEN DEL PROYECTO
+================================================================================
+
+Es una aplicación web hospitalaria con:
+
+  - Pantallas HTML para login y panel de trabajo (por rol).
+  - API REST en JSON para todas las operaciones (pacientes, citas, usuarios…).
+  - Base de datos relacional (PostgreSQL).
+  - Generación de PDF (carnet, expediente, registro diario) y Excel (estadísticas).
+
+
+================================================================================
+2. TECNOLOGÍAS UTILIZADAS
+================================================================================
+
+BACKEND (servidor)
+------------------
+  Python 3.10+
+    Lenguaje principal del servidor.
+
+  Django 4.2
+    Framework web. Maneja rutas, modelos, migraciones, plantillas y admin.
+    Carpeta principal: config/ (configuración) y app/ (lógica del hospital).
+
+  Django REST Framework (DRF)
+    Crea la API REST (/api/...) en JSON.
+    Archivos clave: app/views.py, app/serializers.py, app/urls.py
+
+  djangorestframework-simplejwt
+    Autenticación con tokens JWT (inicio de sesión seguro sin cookies tradicionales).
+    Login: POST /api/auth/login/
+    Los tokens se guardan en el navegador (sessionStorage).
+
+  django-filter
+    Filtros y búsquedas en listados de la API.
+
+  django-cors-headers
+    Permite peticiones desde el navegador en desarrollo.
+
+  bcrypt
+    Algoritmo para cifrar contraseñas de usuarios.
+
+  ReportLab
+    Genera documentos PDF institucionales.
+    Archivo: app/pdf.py
+
+  openpyxl
+    Exporta estadísticas a Excel (.xlsx).
+
+  python-dotenv
+    Lee variables de entorno desde el archivo .env (contraseñas, base de datos…).
+
+  Gunicorn
+    Servidor WSGI recomendado para producción (no para desarrollo local).
+
+  NGINX (opcional)
+    Servidor web con HTTPS. Configuración en nginx/nginx.conf
+
+  (Ver sección 8 para el detalle completo de seguridad del proyecto.)
+
+
+FRONTEND (interfaz en el navegador)
+------------------------------------
+  HTML5 + plantillas Django
+    templates/login.html, templates/panel.html, templates/base.html
+
+  CSS personalizado
+    static/css/estilo.css (colores y diseño del hospital)
+
+  JavaScript (sin framework pesado)
+    static/js/api.js   → comunicación con la API y JWT
+    static/js/panel.js → panel por rol (archivo, registros, admin…)
+    static/js/aviso.js → ventanas emergentes de avisos y confirmaciones
+
+  Bootstrap 5.3 (CDN)
+    Componentes visuales (botones, formularios, rejillas).
+    Se carga desde internet en templates/base.html
+
+
+BASE DE DATOS
+-------------
+PostgreSQL (recomendado para producción / red hospital)
+    Motor: django.db.backends.postgresql
+    Requiere: pip install psycopg2-binary
+    Variables en .env: DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
+    Nombre por defecto: hospital_nicolasacruz
+
+
+OTRAS HERRAMIENTAS
+------------------
+  manage.py
+    Comando central de Django (migrar, servidor, usuarios iniciales…).
+
+  app/management/commands/inicializar.py
+    Crea usuarios iniciales (archivo, registros, Jramirez admin…).
+
+  scripts/respaldo.bat
+    Respaldo de PostgreSQL con pg_dump.
+
+  scripts/generar_certificado.bat
+    Certificado SSL local para NGINX.
+
+
+================================================================================
+3. ESTRUCTURA DE CARPETAS
+================================================================================
+
+Demo02/
+  manage.py              → ejecutar comandos Django
+  requirements.txt       → librerías Python
+  .env                   → configuración secreta (no compartir)
+  .env.example           → plantilla de configuración
+  Logohospi.jpg          → logo del hospital en PDF y pantallas
+
+  config/
+    settings.py          → configuración global (BD, JWT, idioma…)
+    urls.py              → rutas principales (/login/, /panel/, /api/…)
+
+  app/
+    models.py            → tablas: Paciente, Cita, Medico, Usuario…
+    views.py             → endpoints de la API
+    serializers.py       → formato JSON de los datos
+    permissions.py       → permisos por rol
+    pdf.py               → generación de PDF
+    catalogos.py         → especialidades y listas desplegables
+    migrations/          → historial de cambios en la base de datos
+    admin.py             → panel Django Admin
+
+  templates/             → páginas HTML
+  static/                → CSS y JavaScript
+  nginx/                 → HTTPS (opcional)
+  scripts/               → respaldo y certificados
+
+
+================================================================================
+4. DÓNDE VER LA BASE DE DATOS
+================================================================================
+
+MÉTODO 1 — Django Admin (recomendado, desde el navegador)
+---------------------------------------------------------
+  1. Inicia el servidor:
+       cd Demo02
+       python manage.py runserver 127.0.0.1:8888
+
+  2. Abre en el navegador:
+       http://127.0.0.1:8888/admin/
+
+  3. Entra con un usuario que tenga is_staff=True (el administrador Jramirez).
+
+  4. Verás tablas como: Pacientes, Citas, Médicos, Usuarios, Bitácora, etc.
+
+  Nota: Si Jramirez no entra al admin, ejecuta:
+       python manage.py inicializar
+  y vuelve a intentar.
+
+
+
+MÉTODO 3 — PostgreSQL (si USE_SQLITE=False y tienes PostgreSQL)
+-----------------------------------------------------------------
+  Herramienta gráfica: pgAdmin 4 (incluido con PostgreSQL en Windows)
+
+  Datos de conexión (según .env):
+    Host:     localhost
+    Puerto:   5432
+    Base:     hospital_nicolasacruz
+    Usuario:  postgres
+    Contraseña: la que pusiste en DB_PASSWORD en .env
+
+  Pasos en pgAdmin:
+    1. Abrir pgAdmin
+    2. Servidores → PostgreSQL → Databases → hospital_nicolasacruz
+    3. Schemas → public → Tables
+    4. Clic derecho en una tabla → View/Edit Data → All Rows
+
+
+MÉTODO 4 — Línea de comandos Django (consultas rápidas)
+-------------------------------------------------------
+  cd Demo02
+  python manage.py shell
+
+  Ejemplos dentro del shell:
+    from app.models import Paciente, Cita, Medico
+    Paciente.objects.count()
+    list(Paciente.objects.values('numero_expediente', 'primer_nombre')[:5])
+
+  Para salir: exit()
+
+
+MÉTODO 5 — API REST (datos en JSON, no es la BD cruda)
+------------------------------------------------------
+  Con sesión iniciada en el panel, el navegador llama a rutas como:
+    GET http://127.0.0.1:8888/api/pacientes/
+    GET http://127.0.0.1:8888/api/citas/
+    GET http://127.0.0.1:8888/api/usuarios/   (solo admin)
+
+  Requiere token JWT (se obtiene al hacer login).
+
+
+================================================================================
+5. TABLAS PRINCIPALES EN LA BASE DE DATOS
+================================================================================
+
+  app_usuario              Usuarios del sistema y roles
+  app_paciente             Pacientes y expedientes
+  app_cita                 Citas médicas
+  app_medico               Médicos por especialidad
+  app_consulta             Consultas clínicas
+  app_registrodiario       Registro diario de consulta
+  app_registrodiariodetalle Detalle del registro diario
+  app_bitacora             Auditoría (quién hizo qué)
+  app_expedientevas        Módulo jurídico VAS
+  app_estadisticaregistro  Datos de estadística
+  auth_* / django_*        Tablas usadas por Django internamente
+
+
+================================================================================
+6. CÓMO INICIAR EL PROYECTO
+================================================================================
+
+  1. cd Demo02
+  2. pip install -r requirements.txt
+  3. Copiar .env.example a .env y ajustar (USE_SQLITE=True para prueba)
+  4. python manage.py migrate
+  5. python manage.py inicializar
+  6. python manage.py runserver 127.0.0.1:8888
+
+  Login en navegador:
+       http://127.0.0.1:8888/login/
+
+  Administrador:
+       Usuario:    Jramirez
+       Contraseña: la definida en INIT_PASS_ADMIN dentro de .env
+                   (nunca documentar la clave real en este archivo)
+
+  Importante: En tu PC el puerto 8000 puede estar ocupado por otra aplicación.
+  Este proyecto hospital usa el puerto 8888 en desarrollo.
+
+
+================================================================================
+7. ROLES DEL SISTEMA
+================================================================================
+
+  admin        Acceso total, usuarios, médicos, bitácora, respaldo
+  registros    Pacientes, citas, registro diario
+  archivo      Consulta expedientes, citas, hoja de registro (lectura)
+  estadistica  Tablas estadísticas, exportar Excel
+  juridico     Módulo VAS exclusivo
+
+
+================================================================================
+8. SEGURIDAD IMPLEMENTADA EN EL PROYECTO
+================================================================================
+
+El sistema usa varias capas de seguridad. A continuación se detalla qué se
+utilizó, para qué sirve y en qué archivo está configurado.
+
+
+8.1 AUTENTICACIÓN (quién puede entrar)
+---------------------------------------
+  JWT — JSON Web Tokens (djangorestframework-simplejwt)
+    - Al iniciar sesión se generan dos tokens: access (acceso) y refresh (renovar).
+    - Cada petición a la API lleva el token en la cabecera:
+        Authorization: Bearer <token>
+    - Configuración: config/settings.py (SIMPLE_JWT)
+    - Endpoints: POST /api/auth/login/ , POST /api/auth/logout/ ,
+                  POST /api/auth/token/refresh/
+    - Cliente: static/js/api.js
+
+  Tokens en sessionStorage (navegador)
+    - Los tokens se guardan en sessionStorage, no en cookies visibles.
+    - Al cerrar el navegador o la pestaña, la sesión se pierde más fácilmente.
+    - Si el token expira o es inválido, redirige automáticamente al login.
+
+  Lista negra de tokens al cerrar sesión
+    - Al hacer logout, el refresh token se invalida (token_blacklist).
+    - Tabla: token_blacklist_* y app_tokenlistanegra
+    - Evita reutilizar tokens ya cerrados.
+
+
+8.2 CIFRADO DE CONTRASEÑAS
+---------------------------
+  bcrypt (BCryptSHA256PasswordHasher)
+    - Las contraseñas NUNCA se guardan en texto plano en la base de datos.
+    - Se almacenan como hash irreversible.
+    - Configuración: config/settings.py → PASSWORD_HASHERS
+    - Librería: bcrypt (requirements.txt)
+
+  Validadores de Django
+    - Longitud mínima de contraseña al crear usuarios.
+    - Validación de similitud con nombre de usuario.
+    - Configuración: config/settings.py → AUTH_PASSWORD_VALIDATORS
+
+
+8.3 CONTROL DE ACCESO POR ROLES (RBAC)
+---------------------------------------
+  Cada usuario tiene un rol: admin, registros, archivo, estadistica, juridico.
+  Solo puede ver y hacer lo que su rol permite.
+
+  Archivo de permisos: app/permissions.py
+    - EsAdmin          → solo administrador
+    - EsRegistros      → registros y admin
+    - EsArchivo        → archivo y admin
+    - EsEstadistica    → estadística y admin
+    - EsJuridico       → jurídico y admin
+    - SoloLecturaArchivo → archivo solo consulta (GET), no puede modificar
+
+  Aplicado en: app/views.py (cada ViewSet y endpoint tiene permisos).
+  En el panel web: static/js/panel.js muestra menús distintos según el rol.
+
+
+8.4 PROTECCIÓN CONTRA INTENTOS DE LOGIN FALLIDOS
+-------------------------------------------------
+  Bloqueo temporal por intentos incorrectos
+    - Tras varios intentos fallidos, la cuenta se bloquea un tiempo.
+    - Variables en .env:
+        MAX_INTENTOS_LOGIN=5      (intentos permitidos)
+        BLOQUEO_MINUTOS=15        (minutos de bloqueo)
+    - Campos en usuario: intentos_fallidos, bloqueado_hasta
+    - Lógica: app/views.py (LoginView) y app/utils.py (usuario_bloqueado)
+
+  Usuario inactivo o bloqueado por administrador
+    - Campos: is_active, activo_sistema
+    - El admin puede bloquear/reactivar desde el panel (Usuarios).
+    - Un usuario bloqueado no puede iniciar sesión.
+
+
+8.5 AUDITORÍA Y BITÁCORA
+-------------------------
+  Registro de acciones importantes del sistema
+    - Tabla: app_bitacora
+    - Guarda: usuario, rol, acción, detalle, dirección IP, fecha y hora
+    - Ejemplos registrados:
+        LOGIN_OK, LOGIN_FALLIDO, LOGOUT
+        CREAR_PACIENTE, ELIMINAR_PACIENTE
+        CREAR_CITA, BLOQUEAR_USUARIO, VER_DATOS_USUARIO…
+    - Función: app/utils.py → registrar_bitacora()
+    - Consulta: panel admin → Bitácora, o GET /api/bitacora/ (solo admin)
+
+
+8.6 PROTECCIÓN DE DATOS SENSIBLES DE USUARIOS
+----------------------------------------------
+  Ver datos de usuario solo con contraseña del administrador
+    - El botón "Ver datos" pide de nuevo la contraseña del admin.
+    - Endpoint: POST /api/usuarios/{id}/ver_datos/
+    - Verifica con check_password antes de mostrar usuario y clave_referencia.
+    - La acción queda registrada en la bitácora.
+
+  clave_referencia
+    - Campo interno para que el admin recuerde la contraseña asignada.
+    - NO reemplaza el hash cifrado; es solo referencia administrativa.
+    - Solo visible tras verificar identidad del administrador.
+
+
+8.7 VALIDACIÓN DE DATOS EN EL SERVIDOR
+---------------------------------------
+  Serializers de Django REST Framework (app/serializers.py)
+    - Validan fechas (citas solo hacia adelante, nacimiento hacia atrás).
+    - Validan especialidades, estados de cita, médico por especialidad.
+    - Evitan guardar datos incorrectos aunque el navegador sea manipulado.
+
+
+8.8 PROTECCIONES WEB DE DJANGO
+-------------------------------
+  Middleware de seguridad (config/settings.py)
+    - CSRF: protección contra peticiones falsas en formularios Django.
+    - X-Frame-Options: DENY — evita que la página se embeba en iframes.
+    - SECURE_BROWSER_XSS_FILTER: filtro anti-XSS del navegador.
+    - SECURE_CONTENT_TYPE_NOSNIFF: evita interpretación incorrecta de archivos.
+    - CSRF_COOKIE_SECURE / SESSION_COOKIE_SECURE: cookies seguras en producción
+      (cuando DEBUG=False).
+
+  CORS (django-cors-headers)
+    - Controla qué dominios pueden llamar a la API desde el navegador.
+
+
+8.9 VARIABLES SECRETAS FUERA DEL CÓDIGO
+-----------------------------------------
+  python-dotenv + archivo .env
+    - SECRET_KEY de Django (firma de tokens y sesiones)
+    - Contraseña de base de datos
+    - Tiempos de JWT y bloqueo de login
+    - El archivo .env NO debe subirse a repositorios públicos.
+
+
+8.10 HTTPS EN PRODUCCIÓN (OPCIONAL)
+------------------------------------
+  NGINX con certificado SSL/TLS
+    - Configuración: nginx/nginx.conf
+    - Certificados: scripts/generar_certificado.bat → nginx/certs/
+    - Cifra la comunicación entre navegador y servidor en red hospitalaria.
+
+  Gunicorn
+    - Servidor de aplicación recomendado para producción (detrás de NGINX).
+
+
+8.11 RESUMEN RÁPIDO — QUÉ TECNOLOGÍA DE SEGURIDAD SE USÓ
+----------------------------------------------------------
+
+  ┌─────────────────────────────┬──────────────────────────────────────────┐
+  │ Función                     │ Tecnología / componente                  │
+  ├─────────────────────────────┼──────────────────────────────────────────┤
+  │ Inicio de sesión            │ JWT (Simple JWT)                         │
+  │ Cifrado de contraseñas      │ bcrypt                                   │
+  │ Permisos por rol            │ DRF permissions (app/permissions.py)     │
+  │ Anti fuerza bruta login     │ Bloqueo temporal por intentos fallidos   │
+  │ Cierre de sesión seguro     │ Blacklist de tokens JWT                  │
+  │ Auditoría                   │ Bitácora con IP (app_bitacora)           │
+  │ Secretos y claves           │ .env (python-dotenv)                     │
+  │ Validación de datos         │ DRF Serializers                          │
+  │ Cabeceras HTTP seguras      │ Django SecurityMiddleware + settings     │
+  │ HTTPS (producción)          │ NGINX + certificado SSL                  │
+  │ Gestión de usuarios         │ Solo rol admin                           │
+  └─────────────────────────────┴──────────────────────────────────────────┘
+
+  Archivos clave de seguridad:
+    config/settings.py      → JWT, bcrypt, cabeceras, validadores
+    app/permissions.py      → permisos por rol
+    app/views.py            → login, logout, bloqueo, bitácora
+    app/utils.py            → registrar_bitacora, usuario_bloqueado
+    app/models.py           → Usuario (roles, bloqueo, bitácora)
+    static/js/api.js        → manejo de tokens en el navegador
+
+
+8.12 ARCHIVOS SENSIBLES — NO COMPARTIR
+---------------------------------------
+  No compartir ni subir a internet:
+    - .env (claves y contraseñas de BD)
+    - db.sqlite3 (datos reales de pacientes)
+    - SECRET_KEY de Django
+    - Certificados privados (nginx/certs/key.pem)
+
+
+================================================================================
+9. DOCUMENTACIÓN RELACIONADA
+================================================================================
+
+  INSTRUCCIONES.txt     Instalación rápida y usuarios iniciales
+  requirements.txt      Lista exacta de versiones de librerías Python
+  app/catalogos.py      Especialidades médicas del hospital (15 ítems)
+
+
+================================================================================
+  Fin del documento — Demo02 / Sistema Hospitalario HNNCJ
+================================================================================

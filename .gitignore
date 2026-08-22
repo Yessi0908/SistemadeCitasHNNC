@@ -1,0 +1,42 @@
+# Secretos y entorno local
+.env
+.env.local
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Bases de datos y respaldos
+db.sqlite3
+*.sqlite3
+*.sql
+*.dump
+backups/
+respaldos/
+
+# Certificados HTTPS locales
+nginx/certs/
+
+# Python / Django
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+staticfiles/
+media/
+
+# IDE / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.bak
+*.bak_*
+*.log
+
+# Archivos rotos o temporales
+static/js/aviso_broken.ps1

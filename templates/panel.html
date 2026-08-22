@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% block titulo %}Panel — Sistema Hospitalario{% endblock %}
+{% block contenido %}
+<nav class="barra-superior">
+    <div class="d-flex align-items-center gap-2">
+        <img src="/logo/" alt="Logo" class="logo-barra">
+        <span class="nombre-sistema">Sistema Hospitalario — HNNCJ</span>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <span id="usuarioActivo" class="texto-usuario"></span>
+        <span id="rolActivo" class="badge-rol"></span>
+        <button class="btn btn-outline-claro btn-sm" id="btnSalir">Cerrar sesión</button>
+    </div>
+</nav>
+
+<div class="contenedor-panel">
+    <aside class="menu-lateral" id="menuLateral"></aside>
+    <main class="area-trabajo">
+        <div id="mensajeGlobal" class="alert d-none"></div>
+        <section id="seccionInicio" class="seccion-activa">
+            <h2>Bienvenido</h2>
+            <p>Seleccione una opción del menú lateral.</p>
+        </section>
+
+        <!-- ARCHIVO -->
+        <section id="sec-archivo-buscar" class="seccion-oculta">
+            <h2>Consulta de expedientes</h2>
+            <div class="row g-2 mb-3">
+                <div class="col-md-8"><input class="form-control" id="archivoQ" placeholder="Nombre, DPI o expediente"></div>
+                <div class="col-md-4"><button type="button" class="btn btn-primario" id="btnArchivoBuscar">Buscar</button></div>
+            </div>
+            <div id="archivoResultados"></div>
+            {% include "includes/panel_citas_paciente.html" %}
+        </section>
+        <section id="sec-archivo-citas" class="seccion-oculta">
+            <h2>Consulta de citas</h2>
+            <div class="bloque-busqueda mb-3">
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Fecha</label>
+                        <input type="date" class="form-control" id="archivoCitaFecha">
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Especialidad</label>
+                        <select class="form-control" id="archivoCitaEspecialidad">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="button" class="btn btn-primario w-100" id="btnArchivoBuscarCitas">Buscar citas</button>
+                    </div>
+                </div>
+            </div>
+            <div id="archivoCitasResultados"></div>
+        </section>
+        <section id="sec-archivo-registro" class="seccion-oculta">
+            <h2>Hoja de registro diario</h2>
+            <div class="row g-2 align-items-end mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Fecha del registro</label>
+                    <input type="date" class="form-control" id="archivoRegistroFecha">
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-primario" id="btnArchivoImprimirRegistro">Imprimir hoja de registro</button>
+                </div>
+            </div>
+            <div id="archivoRegistroVista"></div>
+        </section>
+
+        <!-- REGISTROS -->
+        <section id="sec-registros-pacientes" class="seccion-oculta">
+            <h2>Pacientes y expedientes</h2>
+            <div class="bloque-busqueda mb-3">
+                <label class="form-label">Buscar por nombre o DPI</label>
+                <div class="row g-2">
+                    <div class="col-md-8">
+                        <input class="form-control" id="registrosBuscarQ" placeholder="Nombre, apellido o DPI">
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-primario" id="btnRegistrosBuscar">Buscar</button>
+                        <button type="button" class="btn btn-secundario" id="btnRegistrosVerTodos">Ver todos</button>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primario mb-3" id="btnNuevoPaciente">Nuevo paciente</button>
+            <div id="listaPacientes"></div>
+            {% include "includes/panel_citas_paciente.html" %}
+        </section>
+        <section id="sec-registros-form" class="seccion-oculta">
+            <h2 id="tituloFormPaciente">Registrar paciente</h2>
+            <form id="formPaciente" class="formulario-grid"></form>
+            <div class="mt-2 grupo-botones-form">
+                <button type="button" class="btn btn-primario" id="btnGuardarPaciente">Guardar</button>
+                <button type="button" class="btn btn-secundario" id="btnCancelarPaciente">Cancelar</button>
+                <button type="button" class="btn btn-peligro btn-eliminar-paciente oculto" id="btnEliminarPaciente">Eliminar paciente</button>
+            </div>
+            {% include "includes/panel_citas_paciente.html" %}
+        </section>
+        <section id="sec-registros-citas" class="seccion-oculta">
+            <h2>Citas médicas</h2>
+            <button type="button" class="btn btn-primario mb-3" id="btnNuevaCita">Nueva cita</button>
+            <div id="cajaFormCita" class="tarjeta-formulario d-none mb-3">
+                <h3 id="tituloFormCita" class="h6">Programar cita</h3>
+                <div class="formulario-cita">
+                    <div>
+                        <label class="form-label">Buscar paciente (nombre, DPI o expediente)</label>
+                        <div class="input-grupo">
+                            <input class="form-control" id="citaBuscarPaciente" placeholder="Escriba y pulse Buscar">
+                            <button type="button" class="btn btn-secundario" id="btnCitaBuscarPaciente">Buscar</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">Paciente / No. expediente</label>
+                        <select class="form-control" id="citaPacienteId" required>
+                            <option value="">-- Seleccione paciente --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Fecha (desde hoy)</label>
+                        <input type="date" class="form-control" id="citaFecha" required>
+                    </div>
+                    <div>
+                        <label class="form-label">Hora</label>
+                        <input type="time" class="form-control" id="citaHora" required>
+                        <p class="texto-ayuda" id="citaHoraAyuda"></p>
+                    </div>
+                    <div>
+                        <label class="form-label">Especialidad</label>
+                        <select class="form-control" id="citaEspecialidad" required>
+                            <option value="">-- Seleccionar --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Médico que atenderá</label>
+                        <select class="form-control" id="citaMedico" required>
+                            <option value="">-- Seleccione especialidad primero --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Estado de la cita</label>
+                        <select class="form-control" id="citaEstado">
+                            <option value="Confirmada">Confirmada</option>
+                            <option value="Cancelada">Cancelada</option>
+                            <option value="Atendida">Atendida</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="form-label">Notas</label>
+                        <input type="text" class="form-control" id="citaNotas">
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <button type="button" class="btn btn-primario" id="btnGuardarCita">Guardar cita</button>
+                    <button type="button" class="btn btn-secundario" id="btnCancelarCita">Cancelar</button>
+                </div>
+            </div>
+            <div id="listaCitas"></div>
+        </section>
+        <section id="sec-registros-diario" class="seccion-oculta">
+            <h2>Registro diario de consulta</h2>
+            <input type="date" id="fechaDiario" class="form-control mb-2 w-auto">
+            <button class="btn btn-primario" id="btnPdfDiario">Generar PDF del día</button>
+            <div id="detalleDiario" class="mt-3"></div>
+        </section>
+
+        <!-- ESTADÍSTICA -->
+        <section id="sec-estadistica" class="seccion-oculta">
+            <h2>Estadísticas hospitalarias</h2>
+            <button class="btn btn-secundario mb-2" id="btnExcelEst">Exportar Datos</button>
+            <div id="tablasEstadistica"></div>
+        </section>
+
+        <!-- JURÍDICO VAS -->
+        <section id="sec-juridico-vas" class="seccion-oculta">
+            <h2>Módulo VAS — Jurídico</h2>
+            <button class="btn btn-primario mb-3" id="btnNuevoVAS">Nuevo registro VAS</button>
+            <div id="listaVAS"></div>
+        </section>
+
+        <!-- ADMIN -->
+        <section id="sec-admin-medicos" class="seccion-oculta">
+            <h2>Médicos y especialidades</h2>
+            <div class="tarjeta-formulario mb-3">
+                <h3 class="h6">Agregar médico</h3>
+                <div class="row g-2">
+                    <div class="col-md-5">
+                        <label class="form-label">Nombre del médico</label>
+                        <input type="text" class="form-control" id="medicoNombre" placeholder="Nombre completo">
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Especialidad</label>
+                        <select class="form-control" id="medicoEspecialidad">
+                            <option value="">-- Seleccionar --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-primario w-100" id="btnGuardarMedico">Guardar</button>
+                    </div>
+                </div>
+            </div>
+            <div id="listaMedicos"></div>
+        </section>
+        <section id="sec-admin-usuarios" class="seccion-oculta">
+            <h2>Usuarios del sistema</h2>
+            <p class="texto-ayuda">Solo el administrador puede crear usuarios y asignar roles.</p>
+            <div class="tarjeta-formulario mb-3">
+                <h3 class="h6">Nuevo usuario</h3>
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label">Usuario</label>
+                        <input type="text" class="form-control" id="usuarioNuevoUsername">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Contraseña</label>
+                        <input type="password" class="form-control" id="usuarioNuevoPassword">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Rol</label>
+                        <select class="form-control" id="usuarioNuevoRol">
+                            <option value="archivo">Archivo</option>
+                            <option value="registros">Registros</option>
+                            <option value="estadistica">Estadística</option>
+                            <option value="juridico">Jurídico</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="button" class="btn btn-primario w-100" id="btnCrearUsuario">Crear usuario</button>
+                    </div>
+                </div>
+            </div>
+            <div id="listaUsuarios"></div>
+        </section>
+        <section id="sec-admin-bitacora" class="seccion-oculta">
+            <h2>Bitácora de auditoría</h2>
+            <div id="listaBitacora"></div>
+        </section>
+        <section id="sec-admin-bd" class="seccion-oculta">
+            <h2>Base de datos del sistema</h2>
+            <p class="texto-ayuda">Resumen de registros guardados. Para ver y editar tablas completas use el administrador de Django.</p>
+            <p><a class="btn btn-primario" href="/admin/" target="_blank" rel="noopener">Abrir administrador de base de datos</a></p>
+            <p class="texto-ayuda">Inicie sesión con Jramirez y haga clic en Pacientes, Citas, Médicos, etc.</p>
+            <div id="adminBdResumen" class="mt-3"></div>
+        </section>
+        <section id="sec-admin-api" class="seccion-oculta">
+            <h2>Documentación de la API</h2>
+            <p class="texto-ayuda">Interfaz para ver y probar todos los endpoints REST del sistema.</p>
+            <p>
+                <a class="btn btn-primario me-2" href="/api/docs/" target="_blank" rel="noopener">Abrir Swagger UI</a>
+                <a class="btn btn-secundario" href="/api/redoc/" target="_blank" rel="noopener">Abrir ReDoc</a>
+            </p>
+            <ol class="texto-ayuda mt-3">
+                <li>En Swagger, ejecute <strong>POST /api/auth/login/</strong> con su usuario y contraseña.</li>
+                <li>Copie el token <strong>access</strong> de la respuesta.</li>
+                <li>Clic en <strong>Authorize</strong> y pegue: <code>Bearer &lt;token&gt;</code></li>
+                <li>Pruebe GET /api/pacientes/, /api/citas/, etc.</li>
+            </ol>
+            <p class="texto-ayuda">Listado completo en el archivo <strong>API_DOCUMENTACION.txt</strong> del proyecto.</p>
+        </section>
+        <section id="sec-admin-config" class="seccion-oculta">
+            <h2>Administración</h2>
+            <button class="btn btn-primario" id="btnRespaldo">Generar respaldo</button>
+        </section>
+    </main>
+</div>
+
+<!-- Modal paciente seleccionado para impresión -->
+<input type="hidden" id="pacienteSeleccionadoId">
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/panel.js"></script>
+{% endblock %}

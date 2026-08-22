@@ -1,0 +1,94 @@
+================================================================================
+ SISTEMA INTEGRAL HOSPITALARIO
+ Hospital Nacional Nicolasa Cruz Jalapa
+================================================================================
+
+ESTRUCTURA
+-----------------------------
+Demo02/
+  Logohospi.jpg     Logo institucional (local)
+  manage.py         Comando Django
+  requirements.txt  Dependencias Python
+  config/           Configuracion del proyecto
+  app/              Modelos, API, PDF, usuarios
+  templates/        Pantallas HTML
+  static/           CSS y JavaScript
+  nginx/            HTTPS con NGINX
+  scripts/          Respaldo y certificados
+
+REQUISITOS
+----------
+- Python 3.10+ (si usa Python 3.14, instale Django 5.1.7 o superior: pip install -r requirements.txt)
+- PostgreSQL
+- pip install -r requirements.txt
+
+INSTALACION RAPIDA
+------------------
+1. Copiar .env.example a .env y ajustar base de datos
+2. pip install -r requirements.txt
+3. Para prueba sin PostgreSQL, en .env poner: USE_SQLITE=True
+4. python manage.py migrate
+5. python manage.py inicializar
+6. python manage.py runserver 127.0.0.1:8888
+
+DOCUMENTACION API (Swagger — ver y probar endpoints)
+----------------------------------------------------
+  http://127.0.0.1:8888/api/docs/
+  Detalle: API_DOCUMENTACION.txt
+
+ACCESO EN RED LAN
+-----------------
+En el servidor: python manage.py runserver 0.0.0.0:8000
+En otras PCs: http://IP_DEL_SERVIDOR:8000/login/
+
+USUARIOS INICIALES
+------------------
+Se crean con: python manage.py inicializar
+Las contraseñas NO van en este archivo: defínalas en .env
+(variables INIT_PASS_ARCHIVO, INIT_PASS_REGISTROS, INIT_PASS_ESTADISTICA,
+ INIT_PASS_JURIDICO, INIT_PASS_ADMIN). Ver .env.example.
+
+Usuarios creados (sin publicar claves):
+  archivo, registros, estadistica, juridico, Jramirez (admin)
+  La cuenta "admin" queda desactivada.
+
+ROLES
+-----
+- archivo: solo lectura de expedientes
+- registros: pacientes, citas, registro diario, carnet PDF
+- estadistica: tablas (sin graficas), Excel
+- juridico: modulo VAS exclusivo
+- admin: acceso total, usuarios, bitacora, respaldo
+
+CATALOGO DE ESPECIALIDADES
+--------------------------
+Las especialidades del hospital se editan solo en: app/catalogos.py
+Formato en el sistema: Nombre (SIGLA), ej. Medicina Interna (MI)
+Psicología Tarde (PST) y Medicina General Tarde (MGT) solo se agendan
+a partir de las 12:00 p.m.
+
+NUMERO DE EXPEDIENTE
+--------------------
+Formato automatico: 263-ANIO-NNNN-SS
+  Ej: 263-2026-0001-00, 0001-01 ... 0001-99, luego 263-2026-0002-00
+
+ATAJOS DE IMPRESION (en panel, con paciente seleccionado)
+---------------------------------------------------------
+F5 = Constancia laboral
+F6 = Hoja de expediente
+F7 = Carnet del paciente
+
+HTTPS CON NGINX
+---------------
+1. scripts\generar_certificado.bat
+2. python manage.py collectstatic
+3. Iniciar Django en puerto 8000
+4. nginx -c ruta\nginx\nginx.conf
+5. Acceder: https://hospital.local
+
+RESPALDO
+--------
+scripts\respaldo.bat (requiere pg_dump)
+O desde panel admin: Generar respaldo
+
+================================================================================
