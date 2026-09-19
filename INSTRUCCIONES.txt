@@ -6,7 +6,8 @@
 ESTRUCTURA
 -----------------------------
 Demo02/
-  Logohospi.jpg     Logo institucional (local)
+  LogoMinisterio.jpg Logo institucional (Ministerio de Salud)
+  Logohospi.jpg      Logo del hospital (opcional; si existe se usa a la izquierda)
   manage.py         Comando Django
   requirements.txt  Dependencias Python
   config/           Configuracion del proyecto

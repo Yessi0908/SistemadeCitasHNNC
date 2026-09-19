@@ -1,6 +1,9 @@
 import io
+import re
+import unicodedata
 from datetime import date
 from pathlib import Path
+from urllib.parse import quote
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
@@ -61,8 +64,8 @@ def _estilos_form():
             alignment=TA_CENTER, leading=11, spaceAfter=1,
         ),
         'inst_lg': ParagraphStyle(
-            'inst_lg', fontName='Helvetica-Bold', fontSize=11, textColor=AZUL,
-            alignment=TA_CENTER, leading=13, spaceAfter=2,
+            'inst_lg', fontName='Helvetica-Bold', fontSize=9.5, textColor=AZUL,
+            alignment=TA_CENTER, leading=11.5, spaceAfter=2,
         ),
         'inst_exp': ParagraphStyle(
             'inst_exp', fontName='Helvetica-Bold', fontSize=10, textColor=NEGRO,
@@ -165,6 +168,26 @@ def _unir(*partes):
     return texto if texto else '—'
 
 
+def _apellido_archivo(paciente):
+    partes = [getattr(paciente, 'primer_apellido', ''), getattr(paciente, 'segundo_apellido', '')]
+    texto = '_'.join(str(p).strip() for p in partes if p)
+    if not texto:
+        return 'paciente'
+    texto = re.sub(r'[\\/:*?"<>|]+', '', texto)
+    texto = re.sub(r'\s+', '_', texto.strip())
+    return texto or 'paciente'
+
+
+def _nombre_pdf_paciente(tipo, paciente):
+    return f'{tipo}_{_apellido_archivo(paciente)}.pdf'
+
+
+def _filename_ascii(nombre):
+    plano = unicodedata.normalize('NFKD', nombre).encode('ascii', 'ignore').decode('ascii')
+    plano = re.sub(r'[^A-Za-z0-9._-]+', '_', plano).strip('._')
+    return plano or 'documento.pdf'
+
+
 def _sexo(paciente):
     if paciente.sexo == 'M':
         return 'Masculino'
@@ -186,21 +209,9 @@ def _campo(etiqueta, valor, estilos, centrado=False, bold=True):
     return [_p(etiqueta, lab), _p(_v(valor), val_st)]
 
 
-def _logo_si_existe(ancho=1.2 * inch, alto=1.2 * inch):
-    if settings.LOGO_RUTA.exists():
-        try:
-            return Image(str(settings.LOGO_RUTA), width=ancho, height=alto)
-        except Exception:
-            pass
-    return None
-
-
-def _logo_secundario(ancho=0.85 * inch, alto=0.85 * inch):
-    ruta = getattr(settings, 'LOGO_SIGSA', None)
-    if not ruta:
-        return None
-    path = Path(ruta)
-    if not path.exists():
+def _logo_desde(ruta, ancho, alto):
+    path = Path(ruta) if ruta else None
+    if not path or not path.exists():
         return None
     try:
         return Image(str(path), width=ancho, height=alto)
@@ -208,14 +219,54 @@ def _logo_secundario(ancho=0.85 * inch, alto=0.85 * inch):
         return None
 
 
+def _logo_si_existe(ancho=1.2 * inch, alto=1.2 * inch):
+    return _logo_desde(getattr(settings, 'LOGO_RUTA', None), ancho, alto)
+
+
+def _logo_secundario(ancho=0.85 * inch, alto=0.85 * inch):
+    img = _logo_desde(getattr(settings, 'LOGO_SIGSA', None), ancho, alto)
+    if img:
+        return img
+    return _logo_si_existe(ancho, alto)
+
+
 def _encabezado(elements, titulo_doc):
     titulo_st, _, _ = _estilos()
-    logo = _logo_si_existe()
+    st = _estilos_form()
+    logo = _logo_si_existe(0.85 * inch, 0.85 * inch)
+    titulos = [
+        _p('MINISTERIO DE SALUD PÚBLICA Y ASISTENCIA SOCIAL', st['inst_md']),
+        Paragraph('Hospital Nacional Nicolasa Cruz Jalapa', titulo_st),
+        Paragraph(titulo_doc, titulo_st),
+    ]
+    centro = Table([[el] for el in titulos], colWidths=[430])
+    centro.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 1),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+    ]))
     if logo:
-        elements.append(logo)
-    elements.append(Paragraph('Hospital Nacional Nicolasa Cruz Jalapa', titulo_st))
-    elements.append(Paragraph(titulo_doc, titulo_st))
-    elements.append(Spacer(1, 0.25 * inch))
+        encabezado = Table(
+            [[logo, centro, _logo_secundario(0.85 * inch, 0.85 * inch) or '']],
+            colWidths=[72, 430, 72],
+        )
+        encabezado.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (0, 0), 'CENTER'),
+            ('ALIGN', (1, 0), (1, 0), 'CENTER'),
+            ('ALIGN', (2, 0), (2, 0), 'CENTER'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 2),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+            ('TOPPADDING', (0, 0), (-1, -1), 2),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+        ]))
+        elements.append(encabezado)
+    else:
+        elements.append(centro)
+    elements.append(Spacer(1, 0.22 * inch))
 
 
 def _tabla_seccion(filas, ancho_etiqueta=170, ancho_valor=340):
@@ -265,7 +316,10 @@ def pdf_respuesta(buffer, nombre='documento.pdf'):
     from django.http import HttpResponse
     buffer.seek(0)
     response = HttpResponse(buffer.read(), content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{nombre}"'
+    ascii_name = _filename_ascii(nombre)
+    response['Content-Disposition'] = (
+        f'attachment; filename="{ascii_name}"; filename*=UTF-8\'\'{quote(nombre)}'
+    )
     return response
 
 
@@ -288,11 +342,12 @@ def generar_carnet(paciente):
     )
     st = _estilos_form()
     ancho = letter[0] - 56
-    col_izq = 338
+    col_izq = ancho / 2.0
     col_der = ancho - col_izq
+    ancho_der_interior = col_der - 16  # descuenta el padding simétrico (8+8) de la columna derecha
 
     consultas = _consultas_paciente(paciente)
-    n_filas = 15
+    n_filas = 6
     filas = [[
         _p('Fecha de Ingreso', st['th']),
         _p('Fecha de Egreso', st['th']),
@@ -311,8 +366,17 @@ def generar_carnet(paciente):
         else:
             filas.append(['', '', '', ''])
 
-    anchos_citas = [72, 72, 112, col_izq - 256]
-    tabla_citas = Table(filas, colWidths=anchos_citas, rowHeights=[32] + [34] * n_filas)
+    ancho_citas_total = col_izq - 12  # deja margen visible antes de la línea divisoria
+    anchos_citas = [
+        ancho_citas_total * 0.20,
+        ancho_citas_total * 0.20,
+        ancho_citas_total * 0.35,
+        ancho_citas_total * 0.25,
+    ]
+    # Sin alturas fijas: cada fila crece según su contenido, así el texto
+    # nunca se sale de las líneas de la cuadrícula. Se compensa con más
+    # padding vertical para que las filas en blanco sigan viéndose amplias.
+    tabla_citas = Table(filas, colWidths=anchos_citas)
     tabla_citas.setStyle(TableStyle([
         ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
         ('FONTSIZE', (0, 0), (-1, -1), 7),
@@ -322,8 +386,8 @@ def generar_carnet(paciente):
         ('BOX', (0, 0), (-1, -1), 0.8, AZUL),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('TOPPADDING', (0, 0), (-1, -1), 3),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
         ('LEFTPADDING', (0, 0), (-1, -1), 3),
         ('RIGHTPADDING', (0, 0), (-1, -1), 3),
         ('BACKGROUND', (0, 1), (-1, -1), BLANCO),
@@ -357,7 +421,7 @@ def generar_carnet(paciente):
     logo = _logo_si_existe(0.72 * inch, 0.72 * inch)
     titulo_caja = Table(
         [[_p('TARJETA DE CITAS', st['titulo_caja'])]],
-        colWidths=[col_der - 8],
+        colWidths=[ancho_der_interior],
     )
     titulo_caja.setStyle(TableStyle([
         ('BOX', (0, 0), (-1, -1), 1.1, AZUL),
@@ -372,7 +436,7 @@ def generar_carnet(paciente):
 
     historia = Table(
         [[_p(_v(paciente.numero_expediente), st['exp_num'])]],
-        colWidths=[col_der - 8],
+        colWidths=[ancho_der_interior],
     )
     historia.setStyle(TableStyle([
         ('LINEBELOW', (0, 0), (0, 0), 0.9, AZUL),
@@ -389,7 +453,7 @@ def generar_carnet(paciente):
             [_p('RX', st['lab_carnet']), _p(' ', st['val'])],
             [_p('EKG', st['lab_carnet']), _p(' ', st['val'])],
         ]],
-        colWidths=[(col_der - 8) / 2.0, (col_der - 8) / 2.0],
+        colWidths=[(ancho_der_interior) / 2.0, (ancho_der_interior) / 2.0],
     )
     rx_ekg.setStyle(TableStyle([
         ('LINEBELOW', (0, 0), (-1, -1), 0.6, GRIS_LINEA),
@@ -407,7 +471,7 @@ def generar_carnet(paciente):
             [_p('Apellidos:', st['lab_carnet']), _p(_unir(paciente.primer_apellido, paciente.segundo_apellido), st['val'])],
             [_p('Nombres:', st['lab_carnet']), _p(_unir(paciente.primer_nombre, paciente.segundo_nombre), st['val'])],
         ]],
-        colWidths=[(col_der - 8) * 0.52, (col_der - 8) * 0.48],
+        colWidths=[(ancho_der_interior) * 0.52, (ancho_der_interior) * 0.48],
     )
     nombres.setStyle(TableStyle([
         ('LINEBELOW', (0, 0), (-1, -1), 0.6, GRIS_LINEA),
@@ -425,7 +489,7 @@ def generar_carnet(paciente):
             [_p('Fecha Admisión', st['lab_carnet']), _p(_fecha(paciente.fecha_ingreso), st['val'])],
             [_p('Registro:', st['lab_carnet']), _p('1', st['val'])],
         ]],
-        colWidths=[(col_der - 8) * 0.58, (col_der - 8) * 0.42],
+        colWidths=[(ancho_der_interior) * 0.58, (ancho_der_interior) * 0.42],
     )
     admision.setStyle(TableStyle([
         ('LINEBELOW', (0, 0), (-1, -1), 0.6, GRIS_LINEA),
@@ -443,7 +507,7 @@ def generar_carnet(paciente):
             [_p('CUI (CODIGO UNICO DE IDENTIFICACION)', st['lab_carnet']), _p(_v(paciente.dpi), st['val_n'])],
             [_p('Especialidad', st['lab_carnet']), _p(_v(paciente.especialidad), st['val_n'])],
         ]],
-        colWidths=[(col_der - 8) * 0.50, (col_der - 8) * 0.50],
+        colWidths=[(ancho_der_interior) * 0.50, (ancho_der_interior) * 0.50],
     )
     extras.setStyle(TableStyle([
         ('LINEBELOW', (0, 0), (-1, -1), 0.5, GRIS_LINEA),
@@ -464,7 +528,7 @@ def generar_carnet(paciente):
         Spacer(1, 6),
     ]
     if logo:
-        logo_caja = Table([[logo]], colWidths=[col_der - 8])
+        logo_caja = Table([[logo]], colWidths=[ancho_der_interior])
         logo_caja.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -495,7 +559,7 @@ def generar_carnet(paciente):
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('LEFTPADDING', (0, 0), (-1, -1), 8),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
         ('TOPPADDING', (0, 0), (-1, -1), 1),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
     ]))
@@ -512,8 +576,21 @@ def generar_carnet(paciente):
         ('BACKGROUND', (0, 0), (-1, -1), BLANCO),
     ]))
 
-    doc.build([cuerpo])
-    return pdf_respuesta(buffer, f'carnet_{paciente.numero_expediente}.pdf')
+    # Limita el bloque a la mitad superior de la hoja carta.
+    # Si el contenido no cabe en esa altura, se reduce (mode='shrink')
+    # en lugar de invadir la mitad inferior de la página.
+    alto_mitad_superior = (letter[1] / 2.0) - doc.topMargin
+    elements = [KeepInFrame(
+        ancho,
+        alto_mitad_superior,
+        [cuerpo],
+        mode='shrink',
+        fakeWidth=False,
+        vAlign='TOP',
+    )]
+
+    doc.build(elements)
+    return pdf_respuesta(buffer, _nombre_pdf_paciente('carnet', paciente))
 
 
 def _fila_form(celdas, anchos, alto):
@@ -797,7 +874,7 @@ def generar_hoja_expediente(paciente, consultas):
     )]
 
     doc.build(elements)
-    return pdf_respuesta(buffer, f'expediente_{paciente.numero_expediente}.pdf')
+    return pdf_respuesta(buffer, _nombre_pdf_paciente('registro', paciente))
 
 
 def generar_constancia_laboral(paciente):
@@ -817,7 +894,7 @@ def generar_constancia_laboral(paciente):
     elements.append(Spacer(1, 0.4 * inch))
     elements.append(Paragraph(f'Fecha: {date.today().strftime("%d/%m/%Y")}', normal))
     doc.build(elements)
-    return pdf_respuesta(buffer, f'constancia_{paciente.numero_expediente}.pdf')
+    return pdf_respuesta(buffer, _nombre_pdf_paciente('constancia', paciente))
 
 
 def generar_registro_diario(registro, detalles):

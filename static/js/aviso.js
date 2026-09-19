@@ -3,6 +3,7 @@ const Aviso = {
     _iniciado: false,
     _resolverConfirm: null,
     _resolverPassword: null,
+    _pideMotivo: false,
 
     iniciar() {
         if (this._iniciado) return;
@@ -21,6 +22,10 @@ const Aviso = {
                 }
             };
         }
+        const inpMotivo = document.getElementById('modalConfirmarMotivo');
+        if (inpMotivo) {
+            inpMotivo.oninput = () => this._actualizarBotonMotivo();
+        }
         this._iniciado = true;
     },
 
@@ -29,7 +34,7 @@ const Aviso = {
         t = t.replace(/https?:\/\/[^\s]*/gi, '');
         t = t.replace(/localhost[^\s]*/gi, '');
         t = t.replace(/127\.0\.0\.1[^\s]*/gi, '');
-        t = t.replace(/\s+/g, ' ').trim();
+        t = t.replace(/[ \t]+/g, ' ').trim();
         if (!t) return 'Operación no completada.';
         if (t.toLowerCase().startsWith('aviso:')) {
             return t.replace(/^aviso:\s*/i, '').trim() || 'Operación no completada.';
@@ -48,9 +53,74 @@ const Aviso = {
         const self = this;
         return new Promise(function(resolve) {
             self._resolverConfirm = resolve;
-            document.getElementById('modalConfirmarMensaje').textContent = self.limpiarTexto(mensaje);
-            document.getElementById('modalConfirmar').classList.remove('oculto');
+            self._pideMotivo = false;
+            self._prepararConfirmacion(mensaje, false);
         });
+    },
+
+    pedirJustificacion(mensaje, textoBoton) {
+        this.iniciar();
+        const self = this;
+        return new Promise(function(resolve) {
+            self._resolverConfirm = resolve;
+            self._pideMotivo = true;
+            self._textoBotonMotivo = textoBoton || 'Confirmar';
+            self._prepararConfirmacion(mensaje, true);
+        });
+    },
+
+    _prepararConfirmacion(mensaje, conMotivo) {
+        document.getElementById('modalConfirmarMensaje').textContent = this.limpiarTexto(mensaje);
+        const caja = document.getElementById('modalConfirmarMotivoCaja');
+        const inp = document.getElementById('modalConfirmarMotivo');
+        const btnSi = document.getElementById('btnModalConfirmarSi');
+        if (caja && inp) {
+            if (conMotivo) {
+                caja.classList.remove('oculto');
+                inp.value = '';
+                btnSi.textContent = this._textoBotonMotivo || 'Confirmar';
+                btnSi.disabled = true;
+                setTimeout(function() { inp.focus(); }, 50);
+            } else {
+                caja.classList.add('oculto');
+                inp.value = '';
+                btnSi.textContent = 'Confirmar';
+                btnSi.disabled = false;
+            }
+        }
+        document.getElementById('modalConfirmar').classList.remove('oculto');
+    },
+
+    _actualizarBotonMotivo() {
+        if (!this._pideMotivo) return;
+        const inp = document.getElementById('modalConfirmarMotivo');
+        const btnSi = document.getElementById('btnModalConfirmarSi');
+        if (!inp || !btnSi) return;
+        btnSi.disabled = String(inp.value || '').trim().length < 8;
+    },
+
+    _cerrarConfirm(resultado) {
+        const inp = document.getElementById('modalConfirmarMotivo');
+        const motivo = inp ? String(inp.value || '').trim() : '';
+        document.getElementById('modalConfirmar').classList.add('oculto');
+        const pideMotivo = this._pideMotivo;
+        this._pideMotivo = false;
+        if (inp) inp.value = '';
+        const caja = document.getElementById('modalConfirmarMotivoCaja');
+        if (caja) caja.classList.add('oculto');
+        const btnSi = document.getElementById('btnModalConfirmarSi');
+        if (btnSi) {
+            btnSi.disabled = false;
+            btnSi.textContent = 'Confirmar';
+        }
+        if (!this._resolverConfirm) return;
+        const resolver = this._resolverConfirm;
+        this._resolverConfirm = null;
+        if (pideMotivo) {
+            resolver(resultado ? motivo : null);
+        } else {
+            resolver(resultado);
+        }
     },
 
     pedirContrasena(mensaje) {
@@ -64,14 +134,6 @@ const Aviso = {
         return new Promise(function(resolve) {
             self._resolverPassword = resolve;
         });
-    },
-
-    _cerrarConfirm(resultado) {
-        document.getElementById('modalConfirmar').classList.add('oculto');
-        if (this._resolverConfirm) {
-            this._resolverConfirm(resultado);
-            this._resolverConfirm = null;
-        }
     },
 
     _cerrarPassword(aceptar) {

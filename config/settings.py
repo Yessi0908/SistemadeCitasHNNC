@@ -102,8 +102,18 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'app.Usuario'
 
-# Logo institucional en raíz del proyecto
-LOGO_RUTA = BASE_DIR / 'Logohospi.jpg'
+def _primera_imagen_existente(*nombres):
+    for nombre in nombres:
+        ruta = BASE_DIR / nombre
+        if ruta.exists():
+            return ruta
+    return BASE_DIR / nombres[0]
+
+
+# Logo del hospital, o el del Ministerio si aún no hay logo hospitalario
+LOGO_RUTA = _primera_imagen_existente('Logohospi.jpg', 'LogoMinisterio.jpg')
+# Logo del Ministerio de Salud (encabezado derecho de documentos)
+LOGO_SIGSA = BASE_DIR / 'LogoMinisterio.jpg'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

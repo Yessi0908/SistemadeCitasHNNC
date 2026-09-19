@@ -1,6 +1,15 @@
 /* Panel principal — módulos por rol */
 (function() {
-    if (!API.token()) { window.location.href = '/login/'; return; }
+    if (!API.token()) { window.location.replace('/login/'); return; }
+
+    window.addEventListener('pageshow', function() {
+        if (!API.token()) window.location.replace('/login/');
+    });
+    history.pushState(null, '', location.href);
+    window.addEventListener('popstate', function() {
+        history.pushState(null, '', location.href);
+        Aviso.mostrar('No es posible retroceder hasta cerrar sesión.');
+    });
 
     const rol = API.rol();
     document.getElementById('usuarioActivo').textContent = sessionStorage.getItem('nombre');
@@ -75,7 +84,7 @@
 
     document.getElementById('btnSalir').onclick = async () => {
         await API.logout();
-        window.location.href = '/login/';
+        window.location.replace('/login/');
     };
 
     // Atajos F5 F6 F7
@@ -886,14 +895,29 @@
     };
 
     // --- ESTADÍSTICA ---
+    function mesEstadistica() {
+        const inp = document.getElementById('estadisticaMes');
+        if (inp && inp.value) return inp.value;
+        return hoyISO().slice(0, 7);
+    }
+
     async function cargarEstadistica() {
-        const data = await API.get('/estadistica/resumen_tablas/');
+        const inp = document.getElementById('estadisticaMes');
+        if (inp && !inp.value) inp.value = hoyISO().slice(0, 7);
+        const mes = mesEstadistica();
+        const data = await API.get('/estadistica/resumen_tablas/?mes=' + encodeURIComponent(mes));
         let html = '<h3>Pacientes por especialidad</h3>';
         html += tablaDesdeLista(data.pacientes_por_especialidad, ['especialidad','total']);
         html += '<h3>Pacientes por estado</h3>';
         html += tablaDesdeLista(data.pacientes_por_estado, ['estado_paciente','total']);
-        html += '<h3>Consultas del mes</h3>';
+        html += '<h3>Consultas del mes ' + (data.mes || mes) + '</h3>';
         html += tablaDesdeLista(data.consultas_mes, ['especialidad','total']);
+        html += '<h3>Citas por especialidad</h3>';
+        html += tablaDesdeLista(data.citas_por_especialidad, ['especialidad','total']);
+        html += '<h3>Citas por estado</h3>';
+        html += tablaDesdeLista(data.citas_por_estado, ['estado','total']);
+        html += '<h3>Citas del mes ' + (data.mes || mes) + '</h3>';
+        html += tablaDesdeLista(data.citas_mes, ['especialidad','total']);
         document.getElementById('tablasEstadistica').innerHTML = html;
     }
 
@@ -910,8 +934,12 @@
         return h + '</tbody></table>';
     }
 
+    const btnFiltrarEstadistica = document.getElementById('btnFiltrarEstadistica');
+    if (btnFiltrarEstadistica) btnFiltrarEstadistica.onclick = cargarEstadistica;
+
     document.getElementById('btnExcelEst').onclick = () => {
-        fetch(API.base + '/estadistica/exportar_excel/', {
+        const mes = mesEstadistica();
+        fetch(API.base + '/estadistica/exportar_excel/?mes=' + encodeURIComponent(mes), {
             headers: { 'Authorization': 'Bearer ' + API.token() },
         }).then(r => r.blob()).then(blob => {
             const u = URL.createObjectURL(blob);
@@ -921,24 +949,152 @@
     };
 
     // --- VAS ---
+    let vasPacienteId = null;
+
+    function htmlCitasVAS(lista, vacio) {
+        if (!lista || !lista.length) return '<p class="texto-ayuda">' + vacio + '</p>';
+        let html = '<table class="tabla-sistema"><thead><tr><th>Fecha</th><th>Hora</th><th>Especialidad</th><th>Médico que atendió</th><th>Estado</th></tr></thead><tbody>';
+        lista.forEach(function(c) {
+            html += '<tr><td>' + c.fecha + '</td><td>' + (c.hora || '').slice(0, 5) + '</td><td>' + (c.especialidad || '') + '</td><td>' + (c.medico_nombre || '—') + '</td><td>' + (c.estado || '') + '</td></tr>';
+        });
+        return html + '</tbody></table>';
+    }
+
+    function renderDetalleVAS(data) {
+        vasPacienteId = data.paciente_id;
+        document.getElementById('vasDetalleTitulo').textContent = data.numero_expediente + ' — ' + (data.nombre || '');
+        document.getElementById('vasDetalleSub').textContent = 'DPI: ' + (data.dpi || '—') + ' · Estado: ' + (data.estado_paciente || '—');
+        let citas = '<h5>Próximas</h5>' + htmlCitasVAS(data.proximas, 'Sin citas programadas');
+        citas += '<h5 class="mt-2">Historial</h5>' + htmlCitasVAS(data.historial, 'Sin historial de citas');
+        document.getElementById('vasCitas').innerHTML = citas;
+        const notas = data.notas || [];
+        if (!notas.length) {
+            document.getElementById('vasNotas').innerHTML = '<p class="texto-ayuda">Aún no hay notas jurídicas.</p>';
+        } else {
+            let html = '<table class="tabla-sistema"><thead><tr><th>Fecha</th><th>Nota</th><th>Autor</th><th>Estado</th><th></th></tr></thead><tbody>';
+            notas.forEach(function(n) {
+                html += '<tr><td>' + (n.creado || '').replace('T', ' ').slice(0, 16) + '</td>';
+                html += '<td>' + String(n.texto || '').replace(/</g, '&lt;') + '</td>';
+                html += '<td>' + (n.creado_por || '') + '</td>';
+                if (n.lista) {
+                    html += '<td>Lista (no se puede modificar)</td><td></td></tr>';
+                } else {
+                    html += '<td>Borrador</td><td>';
+                    html += '<button type="button" class="btn btn-sm btn-secundario btn-editar-nota-vas" data-id="' + n.id + '">Modificar borrador</button> ';
+                    html += '<button type="button" class="btn btn-sm btn-primario btn-confirmar-nota-vas" data-id="' + n.id + '">Confirmar que está lista</button>';
+                    html += '</td></tr>';
+                    html += '<tr class="oculto" id="editarNotaVAS-' + n.id + '"><td colspan="5">';
+                    html += '<textarea class="form-control mb-2" id="textoNotaVAS-' + n.id + '" rows="3">' + String(n.texto || '').replace(/</g, '&lt;') + '</textarea>';
+                    html += '<button type="button" class="btn btn-sm btn-primario btn-guardar-nota-vas" data-id="' + n.id + '">Guardar borrador</button> ';
+                    html += '<button type="button" class="btn btn-sm btn-secundario btn-cancelar-nota-vas" data-id="' + n.id + '">Cancelar</button>';
+                    html += '</td></tr>';
+                }
+            });
+            html += '</tbody></table>';
+            document.getElementById('vasNotas').innerHTML = html;
+            document.querySelectorAll('.btn-editar-nota-vas').forEach(function(btn) {
+                btn.onclick = function() {
+                    const fila = document.getElementById('editarNotaVAS-' + btn.dataset.id);
+                    if (fila) fila.classList.remove('oculto');
+                };
+            });
+            document.querySelectorAll('.btn-cancelar-nota-vas').forEach(function(btn) {
+                btn.onclick = function() {
+                    const fila = document.getElementById('editarNotaVAS-' + btn.dataset.id);
+                    if (fila) fila.classList.add('oculto');
+                };
+            });
+            document.querySelectorAll('.btn-guardar-nota-vas').forEach(function(btn) {
+                btn.onclick = async function() {
+                    const inp = document.getElementById('textoNotaVAS-' + btn.dataset.id);
+                    const texto = (inp ? inp.value : '').trim();
+                    if (texto.length < 5) {
+                        Aviso.mostrar('La nota debe tener al menos 5 caracteres.');
+                        return;
+                    }
+                    try {
+                        const det = await API.post('/vas/notas/' + btn.dataset.id + '/editar/', { texto: texto });
+                        renderDetalleVAS(det);
+                        Aviso.mostrar('Borrador actualizado.');
+                    } catch (e) { Aviso.mostrar(e.message); }
+                };
+            });
+            document.querySelectorAll('.btn-confirmar-nota-vas').forEach(function(btn) {
+                btn.onclick = async function() {
+                    const ok = await Aviso.confirmar('¿Confirmar esta nota como lista? Ya no se podrá modificar, ni siquiera el administrador.');
+                    if (!ok) return;
+                    try {
+                        const det = await API.post('/vas/notas/' + btn.dataset.id + '/confirmar/', {});
+                        renderDetalleVAS(det);
+                        Aviso.mostrar('Nota confirmada. Quedó registrada en bitácora.');
+                    } catch (e) { Aviso.mostrar(e.message); }
+                };
+            });
+        }
+        document.getElementById('detalleVAS').classList.remove('oculto');
+        document.getElementById('detalleVAS').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function abrirDetalleVAS(id) {
+        try {
+            const data = await API.get('/vas/paciente/' + id + '/detalle/');
+            renderDetalleVAS(data);
+        } catch (e) { Aviso.mostrar(e.message || 'No se pudo abrir el paciente VAS.'); }
+    }
+
     async function cargarVAS() {
-        const data = await API.get('/vas/');
+        const q = (document.getElementById('vasBuscarQ') || {}).value || '';
+        let url = '/vas/pacientes/';
+        if (q.trim()) url += '?q=' + encodeURIComponent(q.trim());
+        const data = await API.get(url);
         const lista = data.results || data;
-        let html = '<table class="tabla-sistema"><thead><tr><th>Fecha</th><th>Paciente</th><th>DPI</th><th>Estado</th></tr></thead><tbody>';
-        lista.forEach(v => {
-            html += '<tr><td>' + v.fecha + '</td><td>' + (v.paciente_nombre||'') + '</td><td>' + (v.dpi||'') + '</td><td>' + v.estado + '</td></tr>';
+        if (!lista.length) {
+            document.getElementById('listaVAS').innerHTML = '<p>No hay pacientes VAS con esos datos.</p>';
+            return;
+        }
+        let html = '<table class="tabla-sistema"><thead><tr><th>No. registro</th><th>Paciente</th><th>DPI</th><th>Estado</th><th></th></tr></thead><tbody>';
+        lista.forEach(function(p) {
+            html += '<tr><td>' + (p.numero_expediente || '') + '</td><td>' + (p.nombre_completo || '') + '</td><td>' + (p.dpi || '') + '</td><td>' + (p.estado_paciente || '') + '</td><td>';
+            html += '<button type="button" class="btn btn-sm btn-secundario btn-ver-vas" data-id="' + p.id + '">Ver</button> ';
+            html += '<button type="button" class="btn btn-sm btn-primario btn-notas-vas" data-id="' + p.id + '">Notas</button>';
+            html += '</td></tr>';
         });
         html += '</tbody></table>';
         document.getElementById('listaVAS').innerHTML = html;
+        document.querySelectorAll('.btn-ver-vas, .btn-notas-vas').forEach(function(btn) {
+            btn.onclick = function() { abrirDetalleVAS(btn.dataset.id); };
+        });
     }
 
-    document.getElementById('btnNuevoVAS').onclick = async () => {
-        const pacienteId = prompt('ID del paciente:');
-        const desc = prompt('Descripción del trámite VAS:');
-        if (!pacienteId || !desc) return;
-        await API.post('/vas/', { paciente: pacienteId, descripcion: desc });
-        cargarVAS();
-    };
+    const btnBuscarVAS = document.getElementById('btnBuscarVAS');
+    if (btnBuscarVAS) btnBuscarVAS.onclick = cargarVAS;
+    const btnCerrarDetalleVAS = document.getElementById('btnCerrarDetalleVAS');
+    if (btnCerrarDetalleVAS) {
+        btnCerrarDetalleVAS.onclick = function() {
+            document.getElementById('detalleVAS').classList.add('oculto');
+            vasPacienteId = null;
+        };
+    }
+    const btnAgregarNotaVAS = document.getElementById('btnAgregarNotaVAS');
+    if (btnAgregarNotaVAS) {
+        btnAgregarNotaVAS.onclick = async function() {
+            if (!vasPacienteId) {
+                Aviso.mostrar('Abra un paciente con Ver o Notas.');
+                return;
+            }
+            const texto = (document.getElementById('vasNuevaNota').value || '').trim();
+            if (texto.length < 5) {
+                Aviso.mostrar('Escriba la nota (mínimo 5 caracteres).');
+                return;
+            }
+            try {
+                const det = await API.post('/vas/paciente/' + vasPacienteId + '/notas/', { texto: texto });
+                document.getElementById('vasNuevaNota').value = '';
+                renderDetalleVAS(det);
+                Aviso.mostrar('Nota agregada. Confírmela como lista cuando esté completa. Quedó en bitácora.');
+            } catch (e) { Aviso.mostrar(e.message); }
+        };
+    }
 
     // --- ADMIN ---
     async function cargarMedicosAdmin() {
@@ -974,8 +1130,19 @@
             btn.onclick = async function() {
                 const id = btn.dataset.id;
                 const activar = btn.classList.contains('btn-activar-medico');
+                const motivo = await Aviso.pedirJustificacion(
+                    activar
+                        ? 'Para activar este médico debe escribir la justificación.'
+                        : 'Para desactivar este médico debe escribir la justificación.',
+                    activar ? 'Activar' : 'Desactivar'
+                );
+                if (motivo == null) return;
+                if (motivo.length < 8) {
+                    Aviso.mostrar('La justificación debe tener al menos 8 caracteres.');
+                    return;
+                }
                 try {
-                    await API.patch('/medicos/' + id + '/', { activo: activar });
+                    await API.patch('/medicos/' + id + '/', { activo: activar, justificacion: motivo });
                     await cargarMedicosAdmin();
                     await cargarCatalogos();
                     Aviso.mostrar(activar ? 'Médico activado.' : 'Médico desactivado.');
@@ -984,10 +1151,17 @@
         });
         document.querySelectorAll('.btn-borrar-medico').forEach(function(btn) {
             btn.onclick = async function() {
-                const ok = await Aviso.confirmar('¿Eliminar este médico? No debe tener citas asociadas.');
-                if (!ok) return;
+                const motivo = await Aviso.pedirJustificacion(
+                    'Para eliminar este médico debe escribir la justificación.\nEl nombre se conservará en el historial de citas.',
+                    'Eliminar'
+                );
+                if (motivo == null) return;
+                if (motivo.length < 8) {
+                    Aviso.mostrar('La justificación debe tener al menos 8 caracteres.');
+                    return;
+                }
                 try {
-                    await API.delete('/medicos/' + btn.dataset.id + '/');
+                    await API.delete('/medicos/' + btn.dataset.id + '/', { justificacion: motivo });
                     await cargarMedicosAdmin();
                     await cargarCatalogos();
                     Aviso.mostrar('Médico eliminado.');
@@ -1110,10 +1284,17 @@
         });
         document.querySelectorAll('.btn-eliminar-usuario').forEach(function(btn) {
             btn.onclick = async function() {
-                const ok = await Aviso.confirmar('¿Eliminar al usuario ' + btn.dataset.nombre + '? Esta acción no se puede deshacer.');
-                if (!ok) return;
+                const motivo = await Aviso.pedirJustificacion(
+                    'Para eliminar al usuario ' + btn.dataset.nombre + ' debe escribir la justificación.',
+                    'Eliminar'
+                );
+                if (motivo == null) return;
+                if (motivo.length < 8) {
+                    Aviso.mostrar('La justificación debe tener al menos 8 caracteres.');
+                    return;
+                }
                 try {
-                    await API.delete('/usuarios/' + btn.dataset.id + '/');
+                    await API.delete('/usuarios/' + btn.dataset.id + '/', { justificacion: motivo });
                     cargarUsuarios();
                     Aviso.mostrar('Usuario eliminado.');
                 } catch (e) { Aviso.mostrar(e.message); }
@@ -1136,16 +1317,46 @@
         } catch (e) { Aviso.mostrar(e.message); }
     }
 
+    async function cargarFiltrosBitacora() {
+        const sel = document.getElementById('bitacoraAccion');
+        if (!sel || sel.dataset.listo === '1') return;
+        try {
+            const data = await API.get('/bitacora/filtros/');
+            (data.acciones || []).forEach(function(a) {
+                const o = document.createElement('option');
+                o.value = a.id;
+                o.textContent = a.texto;
+                sel.appendChild(o);
+            });
+            sel.dataset.listo = '1';
+        } catch (e) { /* sin filtros extra */ }
+    }
+
     async function cargarBitacora() {
-        const data = await API.get('/bitacora/');
+        await cargarFiltrosBitacora();
+        const accion = (document.getElementById('bitacoraAccion') || {}).value || '';
+        const usuario = (document.getElementById('bitacoraUsuario') || {}).value || '';
+        const q = (document.getElementById('bitacoraQ') || {}).value || '';
+        let url = '/bitacora/?page_size=100';
+        if (accion) url += '&accion=' + encodeURIComponent(accion);
+        if (usuario.trim()) url += '&usuario=' + encodeURIComponent(usuario.trim());
+        if (q.trim()) url += '&q=' + encodeURIComponent(q.trim());
+        const data = await API.get(url);
         const lista = data.results || data;
+        if (!lista.length) {
+            document.getElementById('listaBitacora').innerHTML = '<p>No hay registros con esos filtros.</p>';
+            return;
+        }
         let html = '<table class="tabla-sistema"><thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Detalle</th></tr></thead><tbody>';
-        lista.forEach(b => {
-            html += '<tr><td>' + b.fecha + '</td><td>' + b.usuario + '</td><td>' + b.accion + '</td><td>' + (b.detalle||'') + '</td></tr>';
+        lista.forEach(function(b) {
+            html += '<tr><td>' + b.fecha + '</td><td>' + b.usuario + '</td><td>' + b.accion + '</td><td>' + (b.detalle || '') + '</td></tr>';
         });
         html += '</tbody></table>';
         document.getElementById('listaBitacora').innerHTML = html;
     }
+
+    const btnFiltrarBitacora = document.getElementById('btnFiltrarBitacora');
+    if (btnFiltrarBitacora) btnFiltrarBitacora.onclick = cargarBitacora;
 
     document.getElementById('btnRespaldo').onclick = async () => {
         const r = await API.post('/respaldo/', {});

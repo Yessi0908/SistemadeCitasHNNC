@@ -36,9 +36,10 @@ body {
 }
 
 .logo-institucional {
-    width: 100px;
+    width: 132px;
     height: auto;
     margin-bottom: 1rem;
+    border-radius: 8px;
 }
 
 .titulo-hospital {
@@ -83,7 +84,13 @@ body {
     align-items: center;
 }
 
-.logo-barra { width: 36px; height: auto; }
+.logo-barra {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    border-radius: 4px;
+    background: var(--blanco);
+}
 .nombre-sistema { font-weight: 600; font-size: 0.95rem; }
 .badge-rol {
     background: var(--blanco);
@@ -331,6 +338,26 @@ h2 {
     flex-wrap: wrap;
     gap: 0.5rem;
     justify-content: center;
+}
+
+.modal-motivo-caja {
+    text-align: left;
+    margin: 0 0 1rem 0;
+}
+
+.modal-motivo-caja .form-label {
+    font-weight: 600;
+    color: var(--azul);
+}
+
+.modal-motivo-caja textarea {
+    resize: vertical;
+    min-height: 72px;
+}
+
+#btnModalConfirmarSi:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
 }
 .nota-modulo { font-size: 0.85rem; color: #444; }
 

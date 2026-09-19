@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import (
     Usuario, Paciente, Consulta, Cita, Bitacora, Medico,
-    ExpedienteVAS, EstadisticaRegistro, RegistroDiario,
+    ExpedienteVAS, NotaVAS, EstadisticaRegistro, RegistroDiario,
 )
 
 
@@ -58,6 +58,24 @@ class BitacoraAdmin(admin.ModelAdmin):
 
 
 admin.site.register(ExpedienteVAS)
+
+
+@admin.register(NotaVAS)
+class NotaVASAdmin(admin.ModelAdmin):
+    list_display = ['paciente', 'lista', 'creado_por', 'creado', 'confirmada']
+    list_filter = ['lista']
+    search_fields = ['texto', 'paciente__numero_expediente']
+    readonly_fields = ['paciente', 'texto', 'lista', 'creado_por', 'creado', 'confirmada_por', 'confirmada']
+
+    def has_change_permission(self, request, obj=None):
+        if obj and obj.lista:
+            return False
+        return super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.lista:
+            return False
+        return super().has_delete_permission(request, obj)
 admin.site.register(EstadisticaRegistro)
 admin.site.register(RegistroDiario)
 

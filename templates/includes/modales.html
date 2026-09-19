@@ -14,8 +14,12 @@
     <div class="modal-aviso-caja">
         <p class="modal-aviso-titulo">Aviso:</p>
         <p class="modal-aviso-mensaje" id="modalConfirmarMensaje"></p>
+        <div id="modalConfirmarMotivoCaja" class="modal-motivo-caja oculto">
+            <label class="form-label" for="modalConfirmarMotivo">Escriba la justificación</label>
+            <textarea class="form-control" id="modalConfirmarMotivo" rows="3" maxlength="400" placeholder="Debe escribir el motivo para poder eliminar"></textarea>
+        </div>
         <div class="modal-aviso-botones">
-            <button type="button" class="btn btn-primario" id="btnModalConfirmarSi">Confirmar</button>
+            <button type="button" class="btn btn-peligro" id="btnModalConfirmarSi">Confirmar</button>
             <button type="button" class="btn btn-secundario" id="btnModalConfirmarNo">Cancelar</button>
         </div>
     </div>

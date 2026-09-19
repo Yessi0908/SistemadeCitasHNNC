@@ -10,7 +10,7 @@ def registrar_bitacora(usuario, accion, detalle='', ip=None, rol=''):
         usuario=str(usuario),
         rol=rol or '',
         accion=accion,
-        detalle=detalle[:500],
+        detalle=detalle[:1000],
         ip=ip,
     )
 

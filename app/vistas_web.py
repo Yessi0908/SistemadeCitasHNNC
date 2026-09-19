@@ -8,12 +8,18 @@ def inicio(request):
     return redirect('login_vista')
 
 
+def _sin_cache(respuesta):
+    respuesta['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    respuesta['Pragma'] = 'no-cache'
+    return respuesta
+
+
 def login_vista(request):
-    return render(request, 'login.html')
+    return _sin_cache(render(request, 'login.html'))
 
 
 def panel(request):
-    return render(request, 'panel.html')
+    return _sin_cache(render(request, 'panel.html'))
 
 
 def logo_institucional(request):

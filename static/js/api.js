@@ -64,7 +64,7 @@ const API = {
 
         if (res.status === 401) {
             this.limpiarSesion();
-            window.location.href = '/login/';
+            window.location.replace('/login/');
             throw new Error('Sesión expirada');
         }
         return res;
@@ -135,14 +135,38 @@ const API = {
         return res.json();
     },
 
-    async delete(url) {
-        const res = await this.peticion(url, { method: 'DELETE' });
+    async delete(url, body) {
+        const opciones = { method: 'DELETE' };
+        if (body) opciones.body = JSON.stringify(body);
+        const res = await this.peticion(url, opciones);
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             throw new Error(API._mensajeError(err) || 'Error al eliminar');
         }
         if (res.status === 204) return {};
         return res.json().catch(() => ({}));
+    },
+
+    _nombreDescarga(res, fallback) {
+        const cd = res.headers.get('Content-Disposition') || '';
+        const utf8 = /filename\*=UTF-8''([^;]+)/i.exec(cd);
+        if (utf8) {
+            try { return decodeURIComponent(utf8[1]); } catch (e) { /* usar otro */ }
+        }
+        const quoted = /filename="([^"]+)"/i.exec(cd);
+        if (quoted) return quoted[1];
+        const plain = /filename=([^;]+)/i.exec(cd);
+        if (plain) return plain[1].trim();
+        return fallback;
+    },
+
+    _guardarBlob(blob, nombre) {
+        const u = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = u;
+        a.download = nombre;
+        a.click();
+        URL.revokeObjectURL(u);
     },
 
     descargarPdfPut(url) {
@@ -154,30 +178,23 @@ const API = {
                 const err = await r.json().catch(function() { return {}; });
                 throw new Error(API._mensajeError(err) || err.error || 'No se pudo generar el PDF');
             }
-            return r.blob();
-        }).then(function(blob) {
-            const u = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = u;
-            a.download = 'registro_diario.pdf';
-            a.click();
-            URL.revokeObjectURL(u);
+            const nombre = API._nombreDescarga(r, 'registro_diario.pdf');
+            const blob = await r.blob();
+            API._guardarBlob(blob, nombre);
         }).catch(function(e) { Aviso.mostrar(e.message); });
     },
 
     descargarPdf(url) {
-        const a = document.createElement('a');
-        a.href = this.base + url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
-        // Usar fetch con token para PDF autenticado
         fetch(this.base + url, { headers: { 'Authorization': 'Bearer ' + this.token() } })
-            .then(r => r.blob())
-            .then(blob => {
-                const u = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = u;
-                link.download = 'documento.pdf';
-                link.click();
-                URL.revokeObjectURL(u);
-            });
+            .then(async function(r) {
+                if (!r.ok) {
+                    const err = await r.json().catch(function() { return {}; });
+                    throw new Error(API._mensajeError(err) || err.error || 'No se pudo generar el PDF');
+                }
+                const nombre = API._nombreDescarga(r, 'documento.pdf');
+                const blob = await r.blob();
+                API._guardarBlob(blob, nombre);
+            })
+            .catch(function(e) { Aviso.mostrar(e.message); });
     },
 };

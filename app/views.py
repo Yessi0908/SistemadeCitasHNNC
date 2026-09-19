@@ -1,4 +1,8 @@
 from datetime import date, timedelta
+from calendar import monthrange
+from pathlib import Path
+from django.conf import settings
+from django.core.exceptions import ValidationError as ErrorValidacionDjango
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q
@@ -12,16 +16,18 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.parsers import JSONParser, FormParser
 from openpyxl import Workbook
+from openpyxl.drawing.image import Image as XLImage
+from openpyxl.styles import Alignment, Font, PatternFill
 from django.http import HttpResponse
 
 from .models import (
-    Paciente, Consulta, Cita, Bitacora, ExpedienteVAS,
+    Paciente, Consulta, Cita, Bitacora, ExpedienteVAS, NotaVAS,
     EstadisticaRegistro, RegistroDiario, RegistroDiarioDetalle,
     TokenListaNegra, Rol, Medico,
 )
 from .serializers import (
     PacienteSerializer, ConsultaSerializer, CitaSerializer, BitacoraSerializer,
-    VASSerializer, EstadisticaSerializer, UsuarioSerializer, UsuarioCrearSerializer,
+    VASSerializer, NotaVASSerializer, EstadisticaSerializer, UsuarioSerializer, UsuarioCrearSerializer,
     RegistroDiarioSerializer, RegistroDiarioDetalleSerializer, MedicoSerializer,
     UsuarioDetalleAdminSerializer,
 )
@@ -35,6 +41,17 @@ from .utils import (
 from . import pdf as generador_pdf
 
 Usuario = get_user_model()
+
+
+def justificacion_requerida(request, minimo=8):
+    texto = ''
+    if hasattr(request, 'data'):
+        texto = str(request.data.get('justificacion') or '').strip()
+    if not texto:
+        texto = str(request.query_params.get('justificacion') or '').strip()
+    if len(texto) < minimo:
+        return None
+    return texto
 
 
 class LoginView(APIView):
@@ -129,11 +146,19 @@ class PacienteViewSet(viewsets.ModelViewSet):
         )
 
     def perform_update(self, serializer):
+        anterior = serializer.instance.estado_paciente
         paciente = serializer.save()
-        registrar_bitacora(
-            self.request.user.username, 'ACTUALIZAR_PACIENTE',
-            paciente.numero_expediente, obtener_ip(self.request), self.request.user.rol,
-        )
+        if anterior != paciente.estado_paciente:
+            registrar_bitacora(
+                self.request.user.username, 'CAMBIAR_ESTADO_PACIENTE',
+                f'{paciente.numero_expediente}: {anterior} → {paciente.estado_paciente}',
+                obtener_ip(self.request), self.request.user.rol,
+            )
+        else:
+            registrar_bitacora(
+                self.request.user.username, 'ACTUALIZAR_PACIENTE',
+                paciente.numero_expediente, obtener_ip(self.request), self.request.user.rol,
+            )
 
     def perform_destroy(self, instance):
         expediente = instance.numero_expediente
@@ -225,15 +250,65 @@ class MedicoViewSet(viewsets.ModelViewSet):
             f'{medico.nombre} — {medico.especialidad}', obtener_ip(self.request), self.request.user.rol,
         )
 
+    def _parse_bool(self, valor):
+        if isinstance(valor, bool):
+            return valor
+        if valor is None:
+            return None
+        return str(valor).strip().lower() in ('1', 'true', 't', 'si', 'sí', 'yes')
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if 'activo' in request.data:
+            nuevo = self._parse_bool(request.data.get('activo'))
+            if nuevo is not None and bool(nuevo) != bool(instance.activo):
+                motivo = justificacion_requerida(request)
+                if not motivo:
+                    return Response({
+                        'error': 'Debe indicar una justificación para cambiar el estado del médico.',
+                    }, status=400)
+                self._justificacion = motivo
+                self._cambio_activo = 'ACTIVAR_MEDICO' if nuevo else 'DESACTIVAR_MEDICO'
+        return super().partial_update(request, *args, **kwargs)
+
     def perform_update(self, serializer):
         medico = serializer.save()
-        registrar_bitacora(
-            self.request.user.username, 'ACTUALIZAR_MEDICO',
-            f'{medico.nombre} — {medico.especialidad}', obtener_ip(self.request), self.request.user.rol,
-        )
+        if getattr(self, '_cambio_activo', None):
+            registrar_bitacora(
+                self.request.user.username, self._cambio_activo,
+                f'{medico.nombre} — {medico.especialidad}. Justificación: {getattr(self, "_justificacion", "")}',
+                obtener_ip(self.request), self.request.user.rol,
+            )
+        else:
+            registrar_bitacora(
+                self.request.user.username, 'ACTUALIZAR_MEDICO',
+                f'{medico.nombre} — {medico.especialidad}', obtener_ip(self.request), self.request.user.rol,
+            )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        motivo = justificacion_requerida(request)
+        if not motivo:
+            return Response({
+                'error': 'Debe indicar una justificación para eliminar al médico.',
+            }, status=400)
+        citas_abiertas = instance.citas.exclude(estado__in=('Atendida', 'Cancelada'))
+        if citas_abiertas.exists():
+            return Response({
+                'error': (
+                    'No se puede eliminar el médico porque tiene citas confirmadas o pendientes. '
+                    'Cuando todas estén atendidas o canceladas sí se podrá eliminar.'
+                ),
+            }, status=400)
+        instance.citas.update(medico_nombre=instance.nombre, medico=None)
+        self._justificacion = motivo
+        return super().destroy(request, *args, **kwargs)
 
     def perform_destroy(self, instance):
-        detalle = f'{instance.nombre} — {instance.especialidad}'
+        detalle = (
+            f'{instance.nombre} — {instance.especialidad}. '
+            f'Justificación: {getattr(self, "_justificacion", "")}'
+        )
         instance.delete()
         registrar_bitacora(
             self.request.user.username, 'ELIMINAR_MEDICO', detalle, obtener_ip(self.request), self.request.user.rol,
@@ -286,9 +361,121 @@ class VASViewSet(viewsets.ModelViewSet):
     serializer_class = VASSerializer
     permission_classes = [IsAuthenticated, EsJuridico]
     search_fields = ['paciente__dpi', 'paciente__numero_expediente']
+    ESP_VAS = 'Violencia y Abuso Sexual (VAS)'
 
     def perform_create(self, serializer):
         serializer.save(creado_por=self.request.user.username)
+
+    def _paciente_vas(self, paciente_id):
+        paciente = Paciente.objects.filter(pk=paciente_id, especialidad=self.ESP_VAS).first()
+        if not paciente:
+            return None
+        return paciente
+
+    def _detalle_paciente(self, paciente):
+        hoy = date.today()
+        citas = Cita.objects.filter(paciente=paciente).order_by('fecha', 'hora')
+        proximas = citas.filter(fecha__gte=hoy, estado='Confirmada').order_by('fecha', 'hora')
+        historial = citas.exclude(pk__in=proximas.values_list('pk', flat=True)).order_by('-fecha', '-hora')
+        notas = paciente.notas_vas.all()
+        return {
+            'paciente_id': paciente.id,
+            'numero_expediente': paciente.numero_expediente,
+            'nombre': paciente.nombre_completo,
+            'dpi': paciente.dpi,
+            'estado_paciente': paciente.estado_paciente,
+            'proximas': CitaSerializer(proximas, many=True).data,
+            'historial': CitaSerializer(historial, many=True).data,
+            'notas': NotaVASSerializer(notas, many=True).data,
+        }
+
+    @action(detail=False, methods=['get'])
+    def pacientes(self, request):
+        qs = Paciente.objects.filter(especialidad=self.ESP_VAS)
+        q = request.query_params.get('q', '').strip()
+        if q:
+            qs = qs.filter(
+                Q(numero_expediente__icontains=q) |
+                Q(dpi__icontains=q) |
+                Q(primer_apellido__icontains=q) |
+                Q(primer_nombre__icontains=q)
+            )
+        qs = qs.order_by('primer_apellido', 'primer_nombre')[:200]
+        return Response(PacienteSerializer(qs, many=True).data)
+
+    @action(detail=False, methods=['get'], url_path=r'paciente/(?P<paciente_id>[0-9]+)/detalle')
+    def detalle(self, request, paciente_id=None):
+        paciente = self._paciente_vas(paciente_id)
+        if not paciente:
+            return Response({'error': 'Paciente VAS no encontrado.'}, status=404)
+        return Response(self._detalle_paciente(paciente))
+
+    @action(detail=False, methods=['post'], url_path=r'paciente/(?P<paciente_id>[0-9]+)/notas')
+    def crear_nota(self, request, paciente_id=None):
+        paciente = self._paciente_vas(paciente_id)
+        if not paciente:
+            return Response({'error': 'Paciente VAS no encontrado.'}, status=404)
+        texto = str(request.data.get('texto') or '').strip()
+        if len(texto) < 5:
+            return Response({'error': 'La nota debe tener al menos 5 caracteres.'}, status=400)
+        nota = NotaVAS.objects.create(
+            paciente=paciente,
+            texto=texto,
+            creado_por=request.user.username,
+        )
+        registrar_bitacora(
+            request.user.username, 'NOTA_JURIDICO',
+            f'{paciente.numero_expediente}: {texto}',
+            obtener_ip(request), request.user.rol,
+        )
+        return Response(self._detalle_paciente(paciente), status=201)
+
+    @action(detail=False, methods=['post'], url_path=r'notas/(?P<nota_id>[0-9]+)/confirmar')
+    def confirmar_nota(self, request, nota_id=None):
+        nota = NotaVAS.objects.select_related('paciente').filter(pk=nota_id).first()
+        if not nota or nota.paciente.especialidad != self.ESP_VAS:
+            return Response({'error': 'Nota no encontrada.'}, status=404)
+        if nota.lista:
+            return Response({
+                'error': 'Esta nota ya está confirmada y no se puede modificar, ni siquiera el administrador.',
+            }, status=403)
+        nota.lista = True
+        nota.confirmada_por = request.user.username
+        nota.confirmada = timezone.now()
+        try:
+            nota.save(update_fields=['lista', 'confirmada_por', 'confirmada'])
+        except ErrorValidacionDjango as e:
+            return Response({'error': str(e)}, status=403)
+        registrar_bitacora(
+            request.user.username, 'NOTA_JURIDICO_LISTA',
+            f'{nota.paciente.numero_expediente}: nota confirmada como lista',
+            obtener_ip(request), request.user.rol,
+        )
+        return Response(self._detalle_paciente(nota.paciente))
+
+    @action(detail=False, methods=['post'], url_path=r'notas/(?P<nota_id>[0-9]+)/editar')
+    def editar_nota(self, request, nota_id=None):
+        nota = NotaVAS.objects.select_related('paciente').filter(pk=nota_id).first()
+        if not nota or nota.paciente.especialidad != self.ESP_VAS:
+            return Response({'error': 'Nota no encontrada.'}, status=404)
+        if nota.lista:
+            return Response({
+                'error': 'Esta nota ya está confirmada. No se puede modificar, ni siquiera el administrador.',
+            }, status=403)
+        texto = str(request.data.get('texto') or '').strip()
+        if len(texto) < 5:
+            return Response({'error': 'La nota debe tener al menos 5 caracteres.'}, status=400)
+        nota.texto = texto
+        try:
+            nota.save(update_fields=['texto'])
+        except ErrorValidacionDjango as e:
+            return Response({'error': str(e)}, status=403)
+        registrar_bitacora(
+            request.user.username, 'NOTA_JURIDICO',
+            f'{nota.paciente.numero_expediente} (borrador editado): {texto}',
+            obtener_ip(request), request.user.rol,
+        )
+        return Response(self._detalle_paciente(nota.paciente))
 
 
 class EstadisticaViewSet(viewsets.ModelViewSet):
@@ -296,30 +483,154 @@ class EstadisticaViewSet(viewsets.ModelViewSet):
     serializer_class = EstadisticaSerializer
     permission_classes = [IsAuthenticated, EsEstadistica]
 
+    @staticmethod
+    def _periodo_mes(mes_iso=None):
+        hoy = date.today()
+        anio, mes = hoy.year, hoy.month
+        if mes_iso:
+            try:
+                partes = str(mes_iso).strip()[:7].split('-')
+                anio, mes = int(partes[0]), int(partes[1])
+                date(anio, mes, 1)
+            except (ValueError, TypeError, IndexError):
+                anio, mes = hoy.year, hoy.month
+        inicio = date(anio, mes, 1)
+        fin = date(anio, mes, monthrange(anio, mes)[1])
+        return inicio, fin, f'{anio:04d}-{mes:02d}'
+
+    @classmethod
+    def _datos_resumen(cls, mes_iso=None):
+        inicio, fin, mes_id = cls._periodo_mes(mes_iso)
+        return {
+            'mes': mes_id,
+            'pacientes_por_especialidad': list(
+                Paciente.objects.values('especialidad').annotate(total=Count('id')).order_by('-total')[:50]
+            ),
+            'pacientes_por_estado': list(
+                Paciente.objects.values('estado_paciente').annotate(total=Count('id'))
+            ),
+            'consultas_mes': list(
+                Consulta.objects.filter(fecha__gte=inicio, fecha__lte=fin)
+                .values('especialidad').annotate(total=Count('id'))
+            ),
+            'citas_por_especialidad': list(
+                Cita.objects.values('especialidad').annotate(total=Count('id')).order_by('-total')
+            ),
+            'citas_por_estado': list(
+                Cita.objects.values('estado').annotate(total=Count('id'))
+            ),
+            'citas_mes': list(
+                Cita.objects.filter(fecha__gte=inicio, fecha__lte=fin)
+                .values('especialidad').annotate(total=Count('id')).order_by('-total')
+            ),
+        }
+
     @action(detail=False, methods=['get'])
     def resumen_tablas(self, request):
-        # Solo tablas, sin gráficas
-        por_especialidad = Paciente.objects.values('especialidad').annotate(
-            total=Count('id')
-        ).order_by('-total')[:50]
-        por_estado = Paciente.objects.values('estado_paciente').annotate(total=Count('id'))
-        consultas_mes = Consulta.objects.filter(
-            fecha__gte=date.today().replace(day=1)
-        ).values('especialidad').annotate(total=Count('id'))
-        return Response({
-            'pacientes_por_especialidad': list(por_especialidad),
-            'pacientes_por_estado': list(por_estado),
-            'consultas_mes': list(consultas_mes),
-        })
+        return Response(self._datos_resumen(request.query_params.get('mes')))
 
     @action(detail=False, methods=['get'])
     def exportar_excel(self, request):
+        datos = self._datos_resumen(request.query_params.get('mes'))
         wb = Workbook()
         ws = wb.active
-        ws.title = 'Estadísticas'
-        ws.append(['Categoría', 'Valor', 'Cantidad', 'Fecha'])
-        for e in EstadisticaRegistro.objects.all()[:500]:
-            ws.append([e.categoria, e.valor, e.cantidad, str(e.fecha)])
+        ws.title = 'Estadísticas HNNCJ'
+        azul = Font(name='Calibri', bold=True, color='003366', size=14)
+        azul_sub = Font(name='Calibri', bold=True, color='003366', size=11)
+        titulo_sec = Font(name='Calibri', bold=True, color='003366', size=12)
+        encabezado = Font(name='Calibri', bold=True, color='FFFFFF')
+        relleno = PatternFill('solid', fgColor='003366')
+
+        ws.merge_cells('B1:E1')
+        ws.merge_cells('B2:E2')
+        ws.merge_cells('B3:E3')
+        ws['B1'] = 'MINISTERIO DE SALUD PÚBLICA Y ASISTENCIA SOCIAL'
+        ws['B1'].font = azul
+        ws['B2'] = 'Hospital Nacional Nicolasa Cruz Jalapa'
+        ws['B2'].font = azul
+        ws['B3'] = (
+            f'Reporte de estadísticas — {date.today().strftime("%d/%m/%Y")} '
+            f'(citas/consultas del mes {datos.get("mes") or ""})'
+        )
+        ws['B3'].font = azul_sub
+        for celda in ('B1', 'B2', 'B3'):
+            ws[celda].alignment = Alignment(horizontal='left', vertical='center')
+
+        logo = Path(getattr(settings, 'LOGO_RUTA', '') or '')
+        if logo.exists():
+            try:
+                img = XLImage(str(logo))
+                img.width = 72
+                img.height = 72
+                ws.add_image(img, 'A1')
+            except Exception:
+                pass
+        ws.row_dimensions[1].height = 22
+        ws.row_dimensions[2].height = 20
+        ws.row_dimensions[3].height = 18
+        ws.column_dimensions['A'].width = 42
+        ws.column_dimensions['B'].width = 28
+        ws.column_dimensions['C'].width = 16
+        ws.column_dimensions['D'].width = 16
+
+        fila = 5
+
+        def seccion(titulo, encabezados, filas):
+            nonlocal fila
+            ws.cell(fila, 1, titulo).font = titulo_sec
+            fila += 1
+            for i, h in enumerate(encabezados, 1):
+                celda = ws.cell(fila, i, h)
+                celda.font = encabezado
+                celda.fill = relleno
+            fila += 1
+            if not filas:
+                ws.cell(fila, 1, 'Sin datos')
+                fila += 1
+            else:
+                for valores in filas:
+                    for i, valor in enumerate(valores, 1):
+                        ws.cell(fila, i, valor)
+                    fila += 1
+            fila += 2
+
+        seccion(
+            'Pacientes por especialidad',
+            ['Especialidad', 'Total'],
+            [(r.get('especialidad') or '—', r.get('total') or 0) for r in datos['pacientes_por_especialidad']],
+        )
+        seccion(
+            'Pacientes por estado',
+            ['Estado', 'Total'],
+            [(r.get('estado_paciente') or '—', r.get('total') or 0) for r in datos['pacientes_por_estado']],
+        )
+        seccion(
+            f'Consultas del mes {datos.get("mes") or ""}',
+            ['Especialidad', 'Total'],
+            [(r.get('especialidad') or '—', r.get('total') or 0) for r in datos['consultas_mes']],
+        )
+        seccion(
+            'Citas por especialidad',
+            ['Especialidad', 'Total'],
+            [(r.get('especialidad') or '—', r.get('total') or 0) for r in datos['citas_por_especialidad']],
+        )
+        seccion(
+            'Citas por estado',
+            ['Estado', 'Total'],
+            [(r.get('estado') or '—', r.get('total') or 0) for r in datos['citas_por_estado']],
+        )
+        seccion(
+            f'Citas del mes {datos.get("mes") or ""}',
+            ['Especialidad', 'Total'],
+            [(r.get('especialidad') or '—', r.get('total') or 0) for r in datos['citas_mes']],
+        )
+        extras = EstadisticaRegistro.objects.all()[:500]
+        if extras:
+            seccion(
+                'Registros manuales',
+                ['Categoría', 'Valor', 'Cantidad', 'Fecha'],
+                [(e.categoria, e.valor, e.cantidad, str(e.fecha)) for e in extras],
+            )
         response = HttpResponse(
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
@@ -332,6 +643,52 @@ class BitacoraViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = BitacoraSerializer
     permission_classes = [IsAuthenticated, EsAdmin]
     queryset = Bitacora.objects.all()
+    pagination_class = None
+
+    def get_queryset(self):
+        qs = Bitacora.objects.all()
+        accion = self.request.query_params.get('accion', '').strip()
+        usuario = self.request.query_params.get('usuario', '').strip()
+        q = self.request.query_params.get('q', '').strip()
+        if accion == 'NOTAS_JURIDICO':
+            qs = qs.filter(accion__in=('NOTA_JURIDICO', 'NOTA_JURIDICO_LISTA'))
+        elif accion:
+            qs = qs.filter(accion=accion)
+        if usuario:
+            qs = qs.filter(usuario__icontains=usuario)
+        if q:
+            qs = qs.filter(
+                Q(accion__icontains=q) | Q(detalle__icontains=q) | Q(usuario__icontains=q)
+            )
+        return qs[:300]
+
+    @action(detail=False, methods=['get'])
+    def filtros(self, request):
+        return Response({
+            'acciones': [
+                {'id': 'CREAR_PACIENTE', 'texto': 'Creación de pacientes'},
+                {'id': 'ACTUALIZAR_PACIENTE', 'texto': 'Actualización de pacientes'},
+                {'id': 'CAMBIAR_ESTADO_PACIENTE', 'texto': 'Cambio de estado del paciente'},
+                {'id': 'ELIMINAR_PACIENTE', 'texto': 'Eliminación de pacientes'},
+                {'id': 'CREAR_CITA', 'texto': 'Creación de citas'},
+                {'id': 'ACTUALIZAR_CITA', 'texto': 'Actualización de citas'},
+                {'id': 'ELIMINAR_CITA', 'texto': 'Eliminación de citas'},
+                {'id': 'CREAR_MEDICO', 'texto': 'Creación de médicos'},
+                {'id': 'ACTIVAR_MEDICO', 'texto': 'Activación de médicos'},
+                {'id': 'DESACTIVAR_MEDICO', 'texto': 'Desactivación de médicos'},
+                {'id': 'ELIMINAR_MEDICO', 'texto': 'Eliminación de médicos'},
+                {'id': 'CREAR_USUARIO', 'texto': 'Creación de usuarios'},
+                {'id': 'ELIMINAR_USUARIO', 'texto': 'Eliminación de usuarios'},
+                {'id': 'BLOQUEAR_USUARIO', 'texto': 'Bloqueo de usuarios'},
+                {'id': 'REACTIVAR_USUARIO', 'texto': 'Reactivación de usuarios'},
+                {'id': 'NOTAS_JURIDICO', 'texto': 'Notas de jurídico'},
+                {'id': 'NOTA_JURIDICO', 'texto': 'Nota jurídica agregada'},
+                {'id': 'NOTA_JURIDICO_LISTA', 'texto': 'Nota jurídica confirmada'},
+                {'id': 'LOGIN_OK', 'texto': 'Inicios de sesión'},
+                {'id': 'LOGIN_FALLIDO', 'texto': 'Intentos fallidos de acceso'},
+                {'id': 'LOGOUT', 'texto': 'Cierres de sesión'},
+            ]
+        })
 
 
 class UsuarioViewSet(viewsets.ModelViewSet):
@@ -350,14 +707,21 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         username = instance.username
         instance.delete()
+        detalle = f'{username}. Justificación: {getattr(self, "_justificacion", "")}'
         registrar_bitacora(
-            self.request.user.username, 'ELIMINAR_USUARIO', username, obtener_ip(self.request),
+            self.request.user.username, 'ELIMINAR_USUARIO', detalle, obtener_ip(self.request),
         )
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.pk == request.user.pk:
             return Response({'error': 'No puede eliminar su propia cuenta.'}, status=400)
+        motivo = justificacion_requerida(request)
+        if not motivo:
+            return Response({
+                'error': 'Debe indicar una justificación para eliminar al usuario.',
+            }, status=400)
+        self._justificacion = motivo
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 

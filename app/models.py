@@ -137,6 +137,7 @@ class Consulta(models.Model):
 class Cita(models.Model):
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='citas')
     medico = models.ForeignKey(Medico, on_delete=models.PROTECT, related_name='citas', null=True, blank=True)
+    medico_nombre = models.CharField(max_length=160, blank=True)
     fecha = models.DateField()
     hora = models.TimeField()
     especialidad = models.CharField(max_length=100)
@@ -186,6 +187,21 @@ class ExpedienteVAS(models.Model):
         ordering = ['-fecha']
 
 
+class NotaVAS(models.Model):
+    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='notas_vas')
+    texto = models.TextField()
+    lista = models.BooleanField(default=False)
+    creado_por = models.CharField(max_length=150, blank=True)
+    creado = models.DateTimeField(auto_now_add=True)
+    confirmada_por = models.CharField(max_length=150, blank=True)
+    confirmada = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Nota jurídica VAS'
+        verbose_name_plural = 'Notas jurídicas VAS'
+        ordering = ['-creado']
+
+
 class EstadisticaRegistro(models.Model):
     fecha = models.DateField(default=timezone.now)
     categoria = models.CharField(max_length=80)
@@ -201,3 +217,4 @@ class TokenListaNegra(models.Model):
     jti = models.CharField(max_length=255, unique=True, db_index=True)
     usuario = models.CharField(max_length=150)
     fecha = models.DateTimeField(auto_now_add=True)
+

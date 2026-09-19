@@ -120,7 +120,8 @@ Demo02/
   requirements.txt       → librerías Python
   .env                   → configuración secreta (no compartir)
   .env.example           → plantilla de configuración
-  Logohospi.jpg          → logo del hospital en PDF y pantallas
+  LogoMinisterio.jpg     → logo del Ministerio (PDF, login, panel y pestaña)
+  Logohospi.jpg          → logo del hospital (opcional; si existe se usa a la izquierda)
 
   config/
     settings.py          → configuración global (BD, JWT, idioma…)
@@ -229,7 +230,7 @@ MÉTODO 5 — API REST (datos en JSON, no es la BD cruda)
 
   1. cd Demo02
   2. pip install -r requirements.txt
-  3. Copiar .env.example a .env y ajustar (USE_SQLITE=True para prueba)
+  3. Copiar .env.example a .env y ajustar
   4. python manage.py migrate
   5. python manage.py inicializar
   6. python manage.py runserver 127.0.0.1:8888
@@ -429,15 +430,6 @@ utilizó, para qué sirve y en qué archivo está configurado.
     app/utils.py            → registrar_bitacora, usuario_bloqueado
     app/models.py           → Usuario (roles, bloqueo, bitácora)
     static/js/api.js        → manejo de tokens en el navegador
-
-
-8.12 ARCHIVOS SENSIBLES — NO COMPARTIR
----------------------------------------
-  No compartir ni subir a internet:
-    - .env (claves y contraseñas de BD)
-    - db.sqlite3 (datos reales de pacientes)
-    - SECRET_KEY de Django
-    - Certificados privados (nginx/certs/key.pem)
 
 
 ================================================================================
