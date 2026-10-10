@@ -1,16 +1,32 @@
 from datetime import date
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as ErrorValidacionDjango
 from .catalogos import ESPECIALIDADES, ESTADOS_CITA, MENSAJE_HORA_TARDE, hora_permitida_para_especialidad
 from .models import (
     Paciente, Consulta, Cita, Bitacora, ExpedienteVAS, NotaVAS,
     EstadisticaRegistro, RegistroDiario, RegistroDiarioDetalle, Medico,
 )
+from .utils import cifrar_referencia, contiene_html, descifrar_referencia
 
 Usuario = get_user_model()
 
+MENSAJE_SIN_HTML = 'No se permiten los caracteres < ni > (posible código HTML).'
 
-class UsuarioSerializer(serializers.ModelSerializer):
+
+class SinHTMLMixin:
+    """Rechaza texto con etiquetas HTML para evitar XSS almacenado."""
+
+    def to_internal_value(self, data):
+        valores = super().to_internal_value(data)
+        errores = {campo: [MENSAJE_SIN_HTML] for campo, valor in valores.items() if contiene_html(valor)}
+        if errores:
+            raise serializers.ValidationError(errores)
+        return valores
+
+
+class UsuarioSerializer(SinHTMLMixin, serializers.ModelSerializer):
     estado = serializers.SerializerMethodField()
 
     class Meta:
@@ -26,6 +42,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
 class UsuarioDetalleAdminSerializer(serializers.ModelSerializer):
     estado = serializers.SerializerMethodField()
+    clave_referencia = serializers.SerializerMethodField()
 
     class Meta:
         model = Usuario
@@ -39,9 +56,12 @@ class UsuarioDetalleAdminSerializer(serializers.ModelSerializer):
             return 'Activo'
         return 'Bloqueado'
 
+    def get_clave_referencia(self, obj):
+        return descifrar_referencia(obj.clave_referencia)
 
-class UsuarioCrearSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=6)
+
+class UsuarioCrearSerializer(SinHTMLMixin, serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, min_length=8)
 
     class Meta:
         model = Usuario
@@ -55,16 +75,27 @@ class UsuarioCrearSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Ya existe un usuario con ese nombre. No se permiten duplicados.')
         return nombre
 
+    def validate(self, data):
+        candidato = Usuario(
+            username=data.get('username', ''), first_name=data.get('first_name', ''),
+            last_name=data.get('last_name', ''),
+        )
+        try:
+            validate_password(data.get('password', ''), user=candidato)
+        except ErrorValidacionDjango as e:
+            raise serializers.ValidationError({'password': list(e.messages)})
+        return data
+
     def create(self, validated_data):
         password = validated_data.pop('password')
         user = Usuario(**validated_data)
         user.set_password(password)
-        user.clave_referencia = password
+        user.clave_referencia = cifrar_referencia(password)
         user.save()
         return user
 
 
-class PacienteSerializer(serializers.ModelSerializer):
+class PacienteSerializer(SinHTMLMixin, serializers.ModelSerializer):
     nombre_completo = serializers.CharField(read_only=True)
     edad_texto = serializers.CharField(read_only=True)
 
@@ -95,7 +126,7 @@ class PacienteSerializer(serializers.ModelSerializer):
         return dpi
 
 
-class MedicoSerializer(serializers.ModelSerializer):
+class MedicoSerializer(SinHTMLMixin, serializers.ModelSerializer):
     class Meta:
         model = Medico
         fields = '__all__'
@@ -120,7 +151,7 @@ class MedicoSerializer(serializers.ModelSerializer):
         return data
 
 
-class ConsultaSerializer(serializers.ModelSerializer):
+class ConsultaSerializer(SinHTMLMixin, serializers.ModelSerializer):
     paciente_nombre = serializers.CharField(source='paciente.nombre_completo', read_only=True)
 
     class Meta:
@@ -128,7 +159,7 @@ class ConsultaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CitaSerializer(serializers.ModelSerializer):
+class CitaSerializer(SinHTMLMixin, serializers.ModelSerializer):
     paciente_nombre = serializers.CharField(source='paciente.nombre_completo', read_only=True)
     numero_expediente = serializers.CharField(source='paciente.numero_expediente', read_only=True)
 
@@ -186,7 +217,7 @@ class BitacoraSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class VASSerializer(serializers.ModelSerializer):
+class VASSerializer(SinHTMLMixin, serializers.ModelSerializer):
     paciente_nombre = serializers.CharField(source='paciente.nombre_completo', read_only=True)
     dpi = serializers.CharField(source='paciente.dpi', read_only=True)
 
@@ -202,7 +233,7 @@ class NotaVASSerializer(serializers.ModelSerializer):
         read_only_fields = ['lista', 'creado_por', 'creado', 'confirmada_por', 'confirmada']
 
 
-class EstadisticaSerializer(serializers.ModelSerializer):
+class EstadisticaSerializer(SinHTMLMixin, serializers.ModelSerializer):
     class Meta:
         model = EstadisticaRegistro
         fields = '__all__'

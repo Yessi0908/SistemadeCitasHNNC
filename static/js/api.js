@@ -6,6 +6,13 @@ const API = {
     refresh() { return sessionStorage.getItem('refresh'); },
     rol() { return sessionStorage.getItem('rol'); },
 
+    /* Escapa texto antes de insertarlo con innerHTML (evita XSS). */
+    esc(valor) {
+        return String(valor ?? '').replace(/[&<>"']/g, function(ch) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+        });
+    },
+
     guardarSesion(data) {
         sessionStorage.setItem('access', data.access);
         sessionStorage.setItem('refresh', data.refresh);

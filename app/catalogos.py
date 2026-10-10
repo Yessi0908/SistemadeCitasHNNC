@@ -1,6 +1,8 @@
 # Catalogo oficial HNNCJ — formato: Nombre (SIGLA)
+# Estas listas alimentan los selects del panel (vista catalogos_paciente).
 from datetime import time
 
+# Especialidades que salen en paciente, cita y médico. Agregar aquí una línea basta.
 ESPECIALIDADES = [
     'Medicina Interna (MI)',
     'Violencia y Abuso Sexual (VAS)',
@@ -25,7 +27,8 @@ ESPECIALIDADES = [
     'Videocirugía (VC)',
 ]
 
-# Solo se pueden agendar a partir de las 12:00 p.m.
+
+# Subconjunto de ESPECIALIDADES: la cita no puede ser antes de las 12:00.
 ESPECIALIDADES_TARDE = [
     'Psicología Tarde (PST)',
     'Medicina General Tarde (MGT)',
@@ -47,17 +50,20 @@ def hora_permitida_para_especialidad(especialidad, hora):
         return True
     return hora >= HORA_MINIMA_TARDE
 
+# Estado del paciente en el expediente
 ESTADOS_PACIENTE = [
     'Control',
     'Primera vez',
 ]
 
+# Estado civil del paciente
 ESTADOS_CIVILES = [
     'Soltero(a)',
     'Casado(a)',
     'Viudo(a)',
 ]
 
+# Estado de una cita agendada
 ESTADOS_CITA = [
     'Confirmada',
     'Cancelada',

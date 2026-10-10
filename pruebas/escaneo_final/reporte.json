@@ -1,0 +1,321 @@
+{
+  "fecha": "2026-10-10T00:25:19",
+  "puntuacion": 100.0,
+  "controles": [
+    {
+      "id": "bandit_high",
+      "herramienta": "Bandit",
+      "titulo": "Código Python sin hallazgos de severidad alta",
+      "severidad": "Alta",
+      "pilar": "Integridad",
+      "aprobado": true,
+      "evidencia": "Sin hallazgos"
+    },
+    {
+      "id": "bandit_medium",
+      "herramienta": "Bandit",
+      "titulo": "Código Python sin hallazgos de severidad media",
+      "severidad": "Media",
+      "pilar": "Integridad",
+      "aprobado": true,
+      "evidencia": "Sin hallazgos"
+    },
+    {
+      "id": "bandit_low",
+      "herramienta": "Bandit",
+      "titulo": "Código Python sin hallazgos de severidad baja",
+      "severidad": "Baja",
+      "pilar": "Integridad",
+      "aprobado": true,
+      "evidencia": "Sin hallazgos"
+    },
+    {
+      "id": "dependencias_sin_cve",
+      "herramienta": "pip-audit",
+      "titulo": "Dependencias sin vulnerabilidades conocidas",
+      "severidad": "Alta",
+      "pilar": "Integridad",
+      "aprobado": true,
+      "evidencia": "Sin vulnerabilidades"
+    },
+    {
+      "id": "security.W004",
+      "herramienta": "Django check --deploy",
+      "titulo": "HSTS configurado (SECURE_HSTS_SECONDS)",
+      "severidad": "Media",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "Sin advertencia"
+    },
+    {
+      "id": "security.W008",
+      "herramienta": "Django check --deploy",
+      "titulo": "Redirección obligatoria a HTTPS (SECURE_SSL_REDIRECT)",
+      "severidad": "Media",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "Sin advertencia"
+    },
+    {
+      "id": "security.W009",
+      "herramienta": "Django check --deploy",
+      "titulo": "SECRET_KEY larga y aleatoria",
+      "severidad": "Alta",
+      "pilar": "Integridad",
+      "aprobado": true,
+      "evidencia": "Sin advertencia"
+    },
+    {
+      "id": "security.W012",
+      "herramienta": "Django check --deploy",
+      "titulo": "Cookie de sesión solo por HTTPS",
+      "severidad": "Media",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "Sin advertencia"
+    },
+    {
+      "id": "security.W016",
+      "herramienta": "Django check --deploy",
+      "titulo": "Cookie CSRF solo por HTTPS",
+      "severidad": "Media",
+      "pilar": "Integridad",
+      "aprobado": true,
+      "evidencia": "Sin advertencia"
+    },
+    {
+      "id": "security.W018",
+      "herramienta": "Django check --deploy",
+      "titulo": "DEBUG desactivado en producción",
+      "severidad": "Alta",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "Sin advertencia"
+    },
+    {
+      "id": "security.W019",
+      "herramienta": "Django check --deploy",
+      "titulo": "X-Frame-Options en DENY",
+      "severidad": "Baja",
+      "pilar": "Integridad",
+      "aprobado": true,
+      "evidencia": "Sin advertencia"
+    },
+    {
+      "id": "security.W020",
+      "herramienta": "Django check --deploy",
+      "titulo": "ALLOWED_HOSTS definido",
+      "severidad": "Media",
+      "pilar": "Integridad",
+      "aprobado": true,
+      "evidencia": "Sin advertencia"
+    },
+    {
+      "id": "xss_frontend",
+      "herramienta": "Análisis estático JS",
+      "titulo": "Datos de la API se escapan antes de insertarse con innerHTML",
+      "severidad": "Alta",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "Todas las inserciones usan esc()"
+    },
+    {
+      "id": "p_auth",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "La API exige autenticación (anónimo -> 401)",
+      "severidad": "Alta",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "GET /api/pacientes/ anónimo -> 401"
+    },
+    {
+      "id": "p_rbac1",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Rol archivo no puede crear pacientes (RBAC)",
+      "severidad": "Alta",
+      "pilar": "Integridad",
+      "aprobado": true,
+      "evidencia": "POST /api/pacientes/ como archivo -> 403"
+    },
+    {
+      "id": "p_rbac2",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Solo el administrador gestiona usuarios (RBAC)",
+      "severidad": "Alta",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "GET /api/usuarios/ como estadistica -> 403"
+    },
+    {
+      "id": "p_hash",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Contraseñas almacenadas con hash bcrypt",
+      "severidad": "Alta",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "Algoritmo: bcrypt_sha256"
+    },
+    {
+      "id": "p_bloqueo",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Bloqueo de cuenta tras intentos fallidos",
+      "severidad": "Media",
+      "pilar": "Disponibilidad",
+      "aprobado": true,
+      "evidencia": "Login correcto tras 5 fallos -> 403"
+    },
+    {
+      "id": "p_logout",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Cierre de sesión invalida el refresh token",
+      "severidad": "Media",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "Refresh tras logout -> 401"
+    },
+    {
+      "id": "p_debug",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Errores sin trazas internas (sin modo DEBUG)",
+      "severidad": "Media",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "404 con información interna: no"
+    },
+    {
+      "id": "p_xss",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "La API rechaza HTML/JavaScript en datos de pacientes (XSS almacenado)",
+      "severidad": "Alta",
+      "pilar": "Integridad",
+      "aprobado": true,
+      "evidencia": "POST paciente con <img onerror> -> 400"
+    },
+    {
+      "id": "p_plano",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "La contraseña de referencia no se guarda en texto plano",
+      "severidad": "Alta",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "clave_referencia en BD: fernet$gAAAAABqydp…"
+    },
+    {
+      "id": "p_politica",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Se rechazan contraseñas débiles o comunes",
+      "severidad": "Media",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "Crear usuario con clave \"12345678\" -> 400"
+    },
+    {
+      "id": "p_enum",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "El login no revela si una cuenta existe o está inactiva",
+      "severidad": "Media",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "Inactivo -> 401 {'error': 'Credenciales inválidas'} | Inexistente -> 401 {'error': 'Credenciales inválidas'}"
+    },
+    {
+      "id": "p_throttle",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Límite de intentos de login por dirección IP",
+      "severidad": "Media",
+      "pilar": "Disponibilidad",
+      "aprobado": true,
+      "evidencia": "15 intentos desde una IP -> códigos [401, 429]"
+    },
+    {
+      "id": "p_xff",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "La bitácora no acepta IP falsificada con X-Forwarded-For",
+      "severidad": "Media",
+      "pilar": "Integridad",
+      "aprobado": true,
+      "evidencia": "IP registrada: 198.51.100.90"
+    },
+    {
+      "id": "p_docs",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Documentación de la API no es pública",
+      "severidad": "Media",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "GET /api/schema/ anónimo -> 403"
+    },
+    {
+      "id": "p_https",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Peticiones HTTP se redirigen a HTTPS",
+      "severidad": "Media",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "GET http://…/login/ -> 301 https://testserver/login/"
+    },
+    {
+      "id": "p_500",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Entrada inválida no provoca error 500 (registro diario)",
+      "severidad": "Media",
+      "pilar": "Disponibilidad",
+      "aprobado": true,
+      "evidencia": "POST registro diario con paciente inexistente -> 404"
+    },
+    {
+      "id": "p_cab",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Cabecera HSTS",
+      "severidad": "Media",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "Strict-Transport-Security: max-age=31536000"
+    },
+    {
+      "id": "p_cab",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Cabecera Content-Security-Policy",
+      "severidad": "Media",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors "
+    },
+    {
+      "id": "p_cab",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Cabecera X-Content-Type-Options",
+      "severidad": "Baja",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "X-Content-Type-Options: nosniff"
+    },
+    {
+      "id": "p_cab",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Cabecera X-Frame-Options (anti clickjacking)",
+      "severidad": "Baja",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "X-Frame-Options: DENY"
+    },
+    {
+      "id": "p_cab",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Cabecera Referrer-Policy",
+      "severidad": "Baja",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "Referrer-Policy: same-origin"
+    },
+    {
+      "id": "p_cab",
+      "herramienta": "Pruebas HTTP",
+      "titulo": "Cabecera Cross-Origin-Opener-Policy",
+      "severidad": "Baja",
+      "pilar": "Confidencialidad",
+      "aprobado": true,
+      "evidencia": "Cross-Origin-Opener-Policy: same-origin"
+    }
+  ]
+}

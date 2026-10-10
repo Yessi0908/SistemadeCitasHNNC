@@ -7,7 +7,7 @@ from urllib.parse import quote
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.pdfbase.pdfmetrics import stringWidth
@@ -53,7 +53,7 @@ def _estilos():
 
 
 def _estilos_form():
-    """Estilos de formulario hospitalario impreso (etiquetas pequeñas, valores legibles)."""
+    """formulario hospitalario impreso (etiquetas pequeñas, valores legibles)."""
     return {
         'inst_sm': ParagraphStyle(
             'inst_sm', fontName='Helvetica', fontSize=8, textColor=AZUL,
@@ -230,16 +230,16 @@ def _logo_secundario(ancho=0.85 * inch, alto=0.85 * inch):
     return _logo_si_existe(ancho, alto)
 
 
-def _encabezado(elements, titulo_doc):
+def _encabezado(elements, titulo_doc, ancho_centro=430):
     titulo_st, _, _ = _estilos()
     st = _estilos_form()
     logo = _logo_si_existe(0.85 * inch, 0.85 * inch)
     titulos = [
         _p('MINISTERIO DE SALUD PÚBLICA Y ASISTENCIA SOCIAL', st['inst_md']),
-        Paragraph('Hospital Nacional Nicolasa Cruz Jalapa', titulo_st),
+        Paragraph('Hospital Nacional ', titulo_st),
         Paragraph(titulo_doc, titulo_st),
     ]
-    centro = Table([[el] for el in titulos], colWidths=[430])
+    centro = Table([[el] for el in titulos], colWidths=[ancho_centro])
     centro.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -251,7 +251,7 @@ def _encabezado(elements, titulo_doc):
     if logo:
         encabezado = Table(
             [[logo, centro, _logo_secundario(0.85 * inch, 0.85 * inch) or '']],
-            colWidths=[72, 430, 72],
+            colWidths=[72, ancho_centro, 72],
         )
         encabezado.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -522,7 +522,7 @@ def generar_carnet(paciente):
 
     encabezado_der = [
         _p('MINISTERIO DE SALUD PUBLICA Y ASISTENCIA SOCIAL', st['inst_sm']),
-        _p('HOSPITAL NACIONAL NICOLASA CRUZ JALAPA', st['inst_lg']),
+        _p('HOSPITAL NACIONAL NICOLASA ', st['inst_lg']),
         Spacer(1, 6),
         titulo_caja,
         Spacer(1, 6),
@@ -624,7 +624,7 @@ def generar_hoja_expediente(paciente, consultas):
     logo_der = _logo_secundario(0.82 * inch, 0.82 * inch)
     textos_inst = [
         _p('MINISTERIO DE SALUD PUBLICA Y ASISTENCIA SOCIAL', st['inst_exp']),
-        _p('HOSPITAL NACIONAL NICOLASA CRUZ JALAPA', st['inst_exp_sub']),
+        _p('HOSPITAL NACIONAL NICOLASA', st['inst_exp_sub']),
     ]
     centro_inst = Table([[el] for el in textos_inst], colWidths=[ancho - 180])
     centro_inst.setStyle(TableStyle([
@@ -897,20 +897,57 @@ def generar_constancia_laboral(paciente):
     return pdf_respuesta(buffer, _nombre_pdf_paciente('constancia', paciente))
 
 
-def generar_registro_diario(registro, detalles):
+def generar_registro_diario(registro, lineas):
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, landscape=True)
+    pagina = landscape(letter)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=pagina,
+        leftMargin=28,
+        rightMargin=28,
+        topMargin=22,
+        bottomMargin=22,
+    )
     elements = []
-    _encabezado(elements, f'Registro Diario de Consulta — {registro.fecha}')
-    filas = [['#', 'Expediente', 'Paciente', 'Especialidad']]
-    for i, d in enumerate(detalles, 1):
-        filas.append([str(i), d.paciente.numero_expediente, d.paciente.nombre_completo, d.especialidad])
-    t = Table(filas, colWidths=[30, 120, 280, 150])
+    ancho = pagina[0] - 56
+    _encabezado(elements, f'Registro Diario de Consulta — {_fecha(registro.fecha)}', ancho_centro=ancho - 144)
+    _, normal, _ = _estilos()
+    elements.append(Paragraph(
+        f'Total de pacientes: <b>{len(lineas)}</b>',
+        normal,
+    ))
+    elements.append(Spacer(1, 0.12 * inch))
+
+    encabezados = ['#', 'Hora', 'Expediente', 'Paciente', 'Especialidad', 'Médico', 'Estado']
+    filas = [encabezados]
+    if lineas:
+        for i, d in enumerate(lineas, 1):
+            filas.append([
+                str(i),
+                d.get('hora') or '—',
+                d.get('expediente') or '—',
+                d.get('paciente_nombre') or '—',
+                d.get('especialidad') or '—',
+                d.get('medico') or '—',
+                d.get('estado') or '—',
+            ])
+    else:
+        filas.append(['', '', '', 'Sin pacientes ni citas para esta fecha', '', '', ''])
+
+    anchos = [ancho * x for x in (0.05, 0.08, 0.16, 0.24, 0.22, 0.15, 0.10)]
+    t = Table(filas, colWidths=anchos, repeatRows=1)
     t.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), AZUL),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
         ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 0.4, colors.grey),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
     ]))
     elements.append(t)
     doc.build(elements)

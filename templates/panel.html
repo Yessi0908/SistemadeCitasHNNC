@@ -303,6 +303,7 @@
         <section id="sec-admin-api" class="seccion-oculta">
             <h2>Documentación de la API</h2>
             <p class="texto-ayuda">Interfaz para ver y probar todos los endpoints REST del sistema.</p>
+            <p class="texto-ayuda">Por seguridad la documentación no es pública: primero inicie sesión en <a href="/admin/" target="_blank" rel="noopener">/admin/</a> con la cuenta de administrador.</p>
             <p>
                 <a class="btn btn-primario me-2" href="/api/docs/" target="_blank" rel="noopener">Abrir Swagger UI</a>
                 <a class="btn btn-secundario" href="/api/redoc/" target="_blank" rel="noopener">Abrir ReDoc</a>
@@ -326,5 +327,5 @@
 <input type="hidden" id="pacienteSeleccionadoId">
 {% endblock %}
 {% block scripts %}
-<script src="/static/js/panel.js?v=vasest1"></script>
+<script src="/static/js/panel.js?v=seguridad1"></script>
 {% endblock %}

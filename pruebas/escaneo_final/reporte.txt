@@ -1,0 +1,84 @@
+==============================================================================
+ REPORTE DE ESCANEO DE SEGURIDAD — escaneo_final
+ Sistema Hospitalario HNNCJ — 2026-10-10 00:25
+==============================================================================
+ PUNTUACIÓN: 100.0 / 100   (212 de 212 puntos)
+ Controles aprobados: 35 de 35
+ Hallazgos abiertos por severidad: Alta=0, Media=0, Baja=0
+
+ Confidencialidad: 21/21 controles aprobados
+ Integridad: 11/11 controles aprobados
+ Disponibilidad: 3/3 controles aprobados
+
+------------------------------------------------------------------------------
+[APROBADO ] [Alta ] Bandit: Código Python sin hallazgos de severidad alta
+            Evidencia: Sin hallazgos
+[APROBADO ] [Media] Bandit: Código Python sin hallazgos de severidad media
+            Evidencia: Sin hallazgos
+[APROBADO ] [Baja ] Bandit: Código Python sin hallazgos de severidad baja
+            Evidencia: Sin hallazgos
+[APROBADO ] [Alta ] pip-audit: Dependencias sin vulnerabilidades conocidas
+            Evidencia: Sin vulnerabilidades
+[APROBADO ] [Media] Django check --deploy: HSTS configurado (SECURE_HSTS_SECONDS)
+            Evidencia: Sin advertencia
+[APROBADO ] [Media] Django check --deploy: Redirección obligatoria a HTTPS (SECURE_SSL_REDIRECT)
+            Evidencia: Sin advertencia
+[APROBADO ] [Alta ] Django check --deploy: SECRET_KEY larga y aleatoria
+            Evidencia: Sin advertencia
+[APROBADO ] [Media] Django check --deploy: Cookie de sesión solo por HTTPS
+            Evidencia: Sin advertencia
+[APROBADO ] [Media] Django check --deploy: Cookie CSRF solo por HTTPS
+            Evidencia: Sin advertencia
+[APROBADO ] [Alta ] Django check --deploy: DEBUG desactivado en producción
+            Evidencia: Sin advertencia
+[APROBADO ] [Baja ] Django check --deploy: X-Frame-Options en DENY
+            Evidencia: Sin advertencia
+[APROBADO ] [Media] Django check --deploy: ALLOWED_HOSTS definido
+            Evidencia: Sin advertencia
+[APROBADO ] [Alta ] Análisis estático JS: Datos de la API se escapan antes de insertarse con innerHTML
+            Evidencia: Todas las inserciones usan esc()
+[APROBADO ] [Alta ] Pruebas HTTP: La API exige autenticación (anónimo -> 401)
+            Evidencia: GET /api/pacientes/ anónimo -> 401
+[APROBADO ] [Alta ] Pruebas HTTP: Rol archivo no puede crear pacientes (RBAC)
+            Evidencia: POST /api/pacientes/ como archivo -> 403
+[APROBADO ] [Alta ] Pruebas HTTP: Solo el administrador gestiona usuarios (RBAC)
+            Evidencia: GET /api/usuarios/ como estadistica -> 403
+[APROBADO ] [Alta ] Pruebas HTTP: Contraseñas almacenadas con hash bcrypt
+            Evidencia: Algoritmo: bcrypt_sha256
+[APROBADO ] [Media] Pruebas HTTP: Bloqueo de cuenta tras intentos fallidos
+            Evidencia: Login correcto tras 5 fallos -> 403
+[APROBADO ] [Media] Pruebas HTTP: Cierre de sesión invalida el refresh token
+            Evidencia: Refresh tras logout -> 401
+[APROBADO ] [Media] Pruebas HTTP: Errores sin trazas internas (sin modo DEBUG)
+            Evidencia: 404 con información interna: no
+[APROBADO ] [Alta ] Pruebas HTTP: La API rechaza HTML/JavaScript en datos de pacientes (XSS almacenado)
+            Evidencia: POST paciente con <img onerror> -> 400
+[APROBADO ] [Alta ] Pruebas HTTP: La contraseña de referencia no se guarda en texto plano
+            Evidencia: clave_referencia en BD: fernet$gAAAAABqydp…
+[APROBADO ] [Media] Pruebas HTTP: Se rechazan contraseñas débiles o comunes
+            Evidencia: Crear usuario con clave "12345678" -> 400
+[APROBADO ] [Media] Pruebas HTTP: El login no revela si una cuenta existe o está inactiva
+            Evidencia: Inactivo -> 401 {'error': 'Credenciales inválidas'} | Inexistente -> 401 {'error': 'Credenciales inválidas'}
+[APROBADO ] [Media] Pruebas HTTP: Límite de intentos de login por dirección IP
+            Evidencia: 15 intentos desde una IP -> códigos [401, 429]
+[APROBADO ] [Media] Pruebas HTTP: La bitácora no acepta IP falsificada con X-Forwarded-For
+            Evidencia: IP registrada: 198.51.100.90
+[APROBADO ] [Media] Pruebas HTTP: Documentación de la API no es pública
+            Evidencia: GET /api/schema/ anónimo -> 403
+[APROBADO ] [Media] Pruebas HTTP: Peticiones HTTP se redirigen a HTTPS
+            Evidencia: GET http://…/login/ -> 301 https://testserver/login/
+[APROBADO ] [Media] Pruebas HTTP: Entrada inválida no provoca error 500 (registro diario)
+            Evidencia: POST registro diario con paciente inexistente -> 404
+[APROBADO ] [Media] Pruebas HTTP: Cabecera HSTS
+            Evidencia: Strict-Transport-Security: max-age=31536000
+[APROBADO ] [Media] Pruebas HTTP: Cabecera Content-Security-Policy
+            Evidencia: Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 
+[APROBADO ] [Baja ] Pruebas HTTP: Cabecera X-Content-Type-Options
+            Evidencia: X-Content-Type-Options: nosniff
+[APROBADO ] [Baja ] Pruebas HTTP: Cabecera X-Frame-Options (anti clickjacking)
+            Evidencia: X-Frame-Options: DENY
+[APROBADO ] [Baja ] Pruebas HTTP: Cabecera Referrer-Policy
+            Evidencia: Referrer-Policy: same-origin
+[APROBADO ] [Baja ] Pruebas HTTP: Cabecera Cross-Origin-Opener-Policy
+            Evidencia: Cross-Origin-Opener-Policy: same-origin
+==============================================================================

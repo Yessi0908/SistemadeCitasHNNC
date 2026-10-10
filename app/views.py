@@ -1,3 +1,5 @@
+
+import logging
 from datetime import date, timedelta
 from calendar import monthrange
 from pathlib import Path
@@ -5,6 +7,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError as ErrorValidacionDjango
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
 from django.db.models import Count, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
@@ -15,6 +18,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.parsers import JSONParser, FormParser
+from rest_framework.throttling import ScopedRateThrottle
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image as XLImage
 from openpyxl.styles import Alignment, Font, PatternFill
@@ -36,11 +40,14 @@ from .permissions import (
     EsLecturaArchivoRegistros,
 )
 from .utils import (
-    registrar_bitacora, generar_numero_expediente, usuario_bloqueado, obtener_ip,
+    registrar_bitacora, generar_numero_expediente, usuario_bloqueado, obtener_ip, contiene_html,
 )
+from .serializers import MENSAJE_SIN_HTML
 from . import pdf as generador_pdf
 
 Usuario = get_user_model()
+logger = logging.getLogger(__name__)
+CREDENCIALES_INVALIDAS = {'error': 'Credenciales inválidas'}
 
 
 def justificacion_requerida(request, minimo=8):
@@ -55,35 +62,39 @@ def justificacion_requerida(request, minimo=8):
 
 
 class LoginView(APIView):
+    """Valida usuario/clave y entrega tokens JWT."""
     permission_classes = [AllowAny]
     parser_classes = [JSONParser, FormParser]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'login'
 
     def post(self, request):
-        username = request.data.get('username', '').strip()
-        password = request.data.get('password', '')
+        username = str(request.data.get('username', '')).strip()
+        password = str(request.data.get('password', ''))
         ip = obtener_ip(request)
 
-        try:
-            user = Usuario.objects.get(username=username)
-        except Usuario.DoesNotExist:
+        user = Usuario.objects.filter(username=username).first()
+        if user is None:
+            # Calcula un hash igual que con un usuario real para no revelar por tiempo si existe.
+            make_password(password)
             registrar_bitacora(username, 'LOGIN_FALLIDO', 'Usuario no existe', ip)
-            return Response({'error': 'Credenciales inválidas'}, status=401)
-
-        if not user.activo_sistema or not user.is_active:
-            return Response({'error': 'Usuario inactivo'}, status=403)
+            return Response(CREDENCIALES_INVALIDAS, status=401)
 
         if usuario_bloqueado(user):
             return Response({'error': 'Cuenta bloqueada temporalmente'}, status=403)
 
         if not user.check_password(password):
             user.intentos_fallidos += 1
-            from django.conf import settings
             if user.intentos_fallidos >= settings.MAX_INTENTOS_LOGIN:
                 user.bloqueado_hasta = timezone.now() + timedelta(minutes=settings.BLOQUEO_MINUTOS)
                 user.intentos_fallidos = 0
             user.save(update_fields=['intentos_fallidos', 'bloqueado_hasta'])
             registrar_bitacora(username, 'LOGIN_FALLIDO', f'Intento {user.intentos_fallidos}', ip, user.rol)
-            return Response({'error': 'Credenciales inválidas'}, status=401)
+            return Response(CREDENCIALES_INVALIDAS, status=401)
+
+        if not user.activo_sistema or not user.is_active:
+            registrar_bitacora(username, 'LOGIN_FALLIDO', 'Usuario inactivo', ip, user.rol)
+            return Response({'error': 'Usuario inactivo'}, status=403)
 
         user.intentos_fallidos = 0
         user.bloqueado_hasta = None
@@ -107,6 +118,7 @@ class LoginView(APIView):
 
 
 class LogoutView(APIView):
+    """Cierra sesión: el refresh token pasa a lista negra."""
     parser_classes = [JSONParser, FormParser]
 
     def post(self, request):
@@ -116,13 +128,14 @@ class LogoutView(APIView):
                 rt = RefreshToken(token)
                 TokenListaNegra.objects.get_or_create(jti=str(rt['jti']), usuario=request.user.username)
                 rt.blacklist()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning('Logout de %s con refresh inválido: %s', request.user.username, exc)
         registrar_bitacora(request.user.username, 'LOGOUT', '', obtener_ip(request), request.user.rol)
         return Response({'mensaje': 'Sesión cerrada'})
 
 
 class PacienteViewSet(viewsets.ModelViewSet):
+    # Lista completa de pacientes (filtros: especialidad, estado; búsqueda: nombre, DPI, expediente)
     queryset = Paciente.objects.all()
     serializer_class = PacienteSerializer
     permission_classes = [IsAuthenticated, SoloLecturaArchivo]
@@ -189,9 +202,13 @@ class PacienteViewSet(viewsets.ModelViewSet):
         paciente = self.get_object()
         hoy = date.today()
         citas = Cita.objects.filter(paciente=paciente).order_by('fecha', 'hora')
+
+        # Citas confirmadas de hoy en adelante
         proximas = citas.filter(
             fecha__gte=hoy, estado='Confirmada'
         ).order_by('fecha', 'hora')
+
+        # Citas pasadas, canceladas o ya atendidas
         historial = citas.exclude(
             pk__in=proximas.values_list('pk', flat=True)
         ).order_by('-fecha', '-hora')
@@ -207,6 +224,7 @@ class PacienteViewSet(viewsets.ModelViewSet):
 
 
 class ConsultaViewSet(viewsets.ModelViewSet):
+    # Consultas registradas (se filtra por paciente, fecha o especialidad)
     queryset = Consulta.objects.select_related('paciente')
     serializer_class = ConsultaSerializer
     permission_classes = [IsAuthenticated, SoloLecturaArchivo]
@@ -224,6 +242,8 @@ class ConsultaViewSet(viewsets.ModelViewSet):
 
 
 class MedicoViewSet(viewsets.ModelViewSet):
+
+    # Médicos del catálogo (se puede filtrar por especialidad y activos=1)
     queryset = Medico.objects.all()
     serializer_class = MedicoSerializer
     permission_classes = [IsAuthenticated]
@@ -418,6 +438,8 @@ class VASViewSet(viewsets.ModelViewSet):
         texto = str(request.data.get('texto') or '').strip()
         if len(texto) < 5:
             return Response({'error': 'La nota debe tener al menos 5 caracteres.'}, status=400)
+        if contiene_html(texto):
+            return Response({'error': MENSAJE_SIN_HTML}, status=400)
         nota = NotaVAS.objects.create(
             paciente=paciente,
             texto=texto,
@@ -465,6 +487,8 @@ class VASViewSet(viewsets.ModelViewSet):
         texto = str(request.data.get('texto') or '').strip()
         if len(texto) < 5:
             return Response({'error': 'La nota debe tener al menos 5 caracteres.'}, status=400)
+        if contiene_html(texto):
+            return Response({'error': MENSAJE_SIN_HTML}, status=400)
         nota.texto = texto
         try:
             nota.save(update_fields=['texto'])
@@ -563,8 +587,8 @@ class EstadisticaViewSet(viewsets.ModelViewSet):
                 img.width = 72
                 img.height = 72
                 ws.add_image(img, 'A1')
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning('No se pudo insertar el logo en el Excel: %s', exc)
         ws.row_dimensions[1].height = 22
         ws.row_dimensions[2].height = 20
         ws.row_dimensions[3].height = 18
@@ -783,16 +807,72 @@ class RegistroDiarioView(APIView):
             raise ValueError('La fecha del registro no puede ser futura.')
         return f
 
+    @staticmethod
+    def _hora_texto(valor):
+        if not valor:
+            return ''
+        if hasattr(valor, 'strftime'):
+            return valor.strftime('%H:%M')
+        return str(valor)[:5]
+
+    def _lineas_del_dia(self, fecha, registro):
+        lineas = []
+        vistos = set()
+        citas = (
+            Cita.objects.filter(fecha=fecha)
+            .select_related('paciente', 'medico')
+            .order_by('hora', 'id')
+        )
+        for cita in citas:
+            lineas.append({
+                'orden': len(lineas) + 1,
+                'hora': self._hora_texto(cita.hora),
+                'expediente': cita.paciente.numero_expediente,
+                'paciente_nombre': cita.paciente.nombre_completo,
+                'especialidad': cita.especialidad or cita.paciente.especialidad,
+                'medico': cita.medico_nombre or (cita.medico.nombre if cita.medico else ''),
+                'estado': cita.estado,
+            })
+            vistos.add(cita.paciente_id)
+        for detalle in registro.detalles.select_related('paciente').order_by('orden', 'id'):
+            if detalle.paciente_id in vistos:
+                continue
+            lineas.append({
+                'orden': len(lineas) + 1,
+                'hora': '',
+                'expediente': detalle.paciente.numero_expediente,
+                'paciente_nombre': detalle.paciente.nombre_completo,
+                'especialidad': detalle.especialidad or detalle.paciente.especialidad,
+                'medico': '',
+                'estado': 'Registro del día',
+            })
+            vistos.add(detalle.paciente_id)
+        ingreso = Paciente.objects.filter(fecha_ingreso=fecha).exclude(pk__in=vistos)
+        for paciente in ingreso.order_by('primer_apellido', 'primer_nombre'):
+            lineas.append({
+                'orden': len(lineas) + 1,
+                'hora': '',
+                'expediente': paciente.numero_expediente,
+                'paciente_nombre': paciente.nombre_completo,
+                'especialidad': paciente.especialidad,
+                'medico': '',
+                'estado': 'Ingreso',
+            })
+            vistos.add(paciente.id)
+        registro.total_pacientes = len(lineas)
+        registro.save(update_fields=['total_pacientes'])
+        return lineas
+
     def get(self, request):
         try:
             fecha = self._parse_fecha(request.query_params.get('fecha', str(date.today())))
         except ValueError as e:
             return Response({'error': str(e)}, status=400)
         registro, _ = RegistroDiario.objects.get_or_create(fecha=fecha)
-        detalles = registro.detalles.select_related('paciente')
+        lineas = self._lineas_del_dia(fecha, registro)
         return Response({
             'registro': RegistroDiarioSerializer(registro).data,
-            'detalles': RegistroDiarioDetalleSerializer(detalles, many=True).data,
+            'detalles': lineas,
         })
 
     def post(self, request):
@@ -800,10 +880,14 @@ class RegistroDiarioView(APIView):
             fecha = self._parse_fecha(request.data.get('fecha', str(date.today())))
         except ValueError as e:
             return Response({'error': str(e)}, status=400)
-        paciente_id = request.data.get('paciente_id')
+        paciente_id = str(request.data.get('paciente_id') or '').strip()
         especialidad = request.data.get('especialidad', '')
+        if not paciente_id.isdigit():
+            return Response({'error': 'Debe indicar un paciente válido.'}, status=400)
+        paciente = Paciente.objects.filter(pk=paciente_id).first()
+        if not paciente:
+            return Response({'error': 'Paciente no encontrado.'}, status=404)
         registro, _ = RegistroDiario.objects.get_or_create(fecha=fecha)
-        paciente = Paciente.objects.get(pk=paciente_id)
         orden = registro.detalles.count() + 1
         RegistroDiarioDetalle.objects.create(
             registro=registro, paciente=paciente, orden=orden, especialidad=especialidad,
@@ -817,11 +901,9 @@ class RegistroDiarioView(APIView):
             fecha = self._parse_fecha(request.query_params.get('fecha', str(date.today())))
         except ValueError as e:
             return Response({'error': str(e)}, status=400)
-        registro = RegistroDiario.objects.filter(fecha=fecha).first()
-        if not registro:
-            return Response({'error': 'Sin registro'}, status=404)
-        detalles = registro.detalles.select_related('paciente')
-        return generador_pdf.generar_registro_diario(registro, detalles)
+        registro, _ = RegistroDiario.objects.get_or_create(fecha=fecha)
+        lineas = self._lineas_del_dia(fecha, registro)
+        return generador_pdf.generar_registro_diario(registro, lineas)
 
 
 class RespaldoView(APIView):

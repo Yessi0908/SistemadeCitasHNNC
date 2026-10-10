@@ -1,8 +1,13 @@
 from datetime import date
+import base64
 import calendar
+import hashlib
+from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.utils import timezone
 from .models import Bitacora, Paciente
+
+PREFIJO_CIFRADO = 'fernet$'
 
 
 def registrar_bitacora(usuario, accion, detalle='', ip=None, rol=''):
@@ -77,7 +82,35 @@ def usuario_bloqueado(user):
 
 
 def obtener_ip(request):
+    """IP del cliente. X-Forwarded-For solo se usa si hay proxies de confianza (NUM_PROXIES)."""
+    proxies = settings.REST_FRAMEWORK.get('NUM_PROXIES') or 0
     xff = request.META.get('HTTP_X_FORWARDED_FOR')
-    if xff:
-        return xff.split(',')[0].strip()
+    if proxies and xff:
+        direcciones = [d.strip() for d in xff.split(',')]
+        return direcciones[-min(proxies, len(direcciones))]
     return request.META.get('REMOTE_ADDR')
+
+
+def contiene_html(texto):
+    return isinstance(texto, str) and ('<' in texto or '>' in texto)
+
+
+def _fernet():
+    clave = hashlib.sha256(('clave-referencia:' + settings.SECRET_KEY).encode()).digest()
+    return Fernet(base64.urlsafe_b64encode(clave))
+
+
+def cifrar_referencia(texto):
+    if not texto:
+        return ''
+    return PREFIJO_CIFRADO + _fernet().encrypt(texto.encode()).decode()
+
+
+def descifrar_referencia(valor):
+    """Devuelve '' si el valor se cifró con otra SECRET_KEY."""
+    if not valor or not valor.startswith(PREFIJO_CIFRADO):
+        return valor or ''
+    try:
+        return _fernet().decrypt(valor[len(PREFIJO_CIFRADO):].encode()).decode()
+    except InvalidToken:
+        return ''

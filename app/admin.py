@@ -12,6 +12,7 @@ class UsuarioAdmin(UserAdmin):
     list_filter = ['rol', 'is_active', 'activo_sistema']
     search_fields = ['username', 'first_name', 'last_name']
     fieldsets = UserAdmin.fieldsets + (('Hospital', {'fields': ('rol', 'activo_sistema', 'clave_referencia')}),)
+    readonly_fields = ['clave_referencia']
     add_fieldsets = UserAdmin.add_fieldsets + ((None, {'fields': ('rol',)}),)
 
 

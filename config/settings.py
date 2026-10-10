@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.csp import CSP
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -15,7 +16,12 @@ if not SECRET_KEY:
     raise ImproperlyConfigured(
         'Defina SECRET_KEY en el archivo .env (copie desde .env.example).'
     )
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
+if not DEBUG and (len(SECRET_KEY) < 50 or SECRET_KEY.startswith('cambiar')):
+    raise ImproperlyConfigured(
+        'En producción SECRET_KEY debe tener al menos 50 caracteres aleatorios. Genérela con: '
+        'python -c "from django.core.management.utils import get_random_secret_key as g; print(g())"'
+    )
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
 if DEBUG and os.getenv('ALLOWED_HOSTS') is None:
     ALLOWED_HOSTS = ['*']
@@ -45,6 +51,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.csp.ContentSecurityPolicyMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -75,7 +82,7 @@ DATABASES = {
     }
 }
 
-# SQLite para prueba rápida sin PostgreSQL
+
 if os.getenv('USE_SQLITE', 'False') == 'True':
     DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -84,7 +91,10 @@ if os.getenv('USE_SQLITE', 'False') == 'True':
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 8}},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {'NAME': 'app.validadores.PalabrasInstitucionalesValidator'},
 ]
 
 LANGUAGE_CODE = 'es-gt'
@@ -130,6 +140,11 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 25,
+    'DEFAULT_THROTTLE_RATES': {
+        'login': os.getenv('LIMITE_LOGIN_IP', '10/min'),
+    },
+    # Proxies de confianza delante de Django (1 si se usa NGINX). Con 0 se ignora X-Forwarded-For.
+    'NUM_PROXIES': int(os.getenv('NUM_PROXIES', 0)),
 }
 
 SIMPLE_JWT = {
@@ -145,6 +160,8 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API REST del Hospital Nacional Nicolasa Cruz Jalapa. Use JWT: inicie sesión en POST /api/auth/login/ y pegue el token access en Authorize.',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.IsAdminUser'],
+    'SERVE_AUTHENTICATION': ['rest_framework.authentication.SessionAuthentication'],
     'COMPONENT_SPLIT_REQUEST': True,
     'SECURITY': [{'BearerAuth': []}],
     'APPEND_COMPONENTS': {
@@ -170,6 +187,34 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
+# HTTPS: NGINX termina TLS y avisa a Django con la cabecera X-Forwarded-Proto.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', str(not DEBUG)) == 'True'
+# Con certificado autofirmado, HSTS impide "continuar de todos modos": instale el certificado en cada PC.
+SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', 0 if DEBUG else 31536000))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+
+SECURE_CSP = {
+    'default-src': [CSP.SELF],
+    'script-src': [CSP.SELF, 'https://cdn.jsdelivr.net'],
+    'style-src': [CSP.SELF, 'https://cdn.jsdelivr.net'],
+    'img-src': [CSP.SELF, 'data:', 'blob:'],
+    'font-src': [CSP.SELF, 'https://cdn.jsdelivr.net', 'data:'],
+    'connect-src': [CSP.SELF],
+    'object-src': [CSP.NONE],
+    'base-uri': [CSP.SELF],
+    'form-action': [CSP.SELF],
+    'frame-ancestors': [CSP.NONE],
+}
+# Swagger UI y ReDoc (solo administradores) necesitan scripts en línea.
+CSP_DOCUMENTACION_API = {
+    **SECURE_CSP,
+    'script-src': [CSP.SELF, 'https://cdn.jsdelivr.net', CSP.UNSAFE_INLINE],
+    'style-src': [CSP.SELF, 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', CSP.UNSAFE_INLINE],
+    'font-src': [CSP.SELF, 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net', 'data:'],
+    'worker-src': [CSP.SELF, 'blob:'],
+}
+
 MAX_INTENTOS_LOGIN = int(os.getenv('MAX_INTENTOS_LOGIN', 5))
 BLOQUEO_MINUTOS = int(os.getenv('BLOQUEO_MINUTOS', 15))
 CODIGO_HOSPITAL = '263'
@@ -186,4 +231,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {'console': {'class': 'logging.StreamHandler'}},
     'root': {'handlers': ['console'], 'level': 'INFO'},
+    'loggers': {
+        'django.security': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+    },
 }

@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 import os
 
 from app.models import Rol
+from app.utils import cifrar_referencia
 
 Usuario = get_user_model()
 
@@ -45,7 +46,7 @@ class Command(BaseCommand):
             )
             user.rol = rol
             user.set_password(password)
-            user.clave_referencia = password
+            user.clave_referencia = cifrar_referencia(password)
             user.activo_sistema = True
             user.is_active = True
             if rol == Rol.ADMIN:

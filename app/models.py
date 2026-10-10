@@ -22,8 +22,8 @@ class Usuario(AbstractUser):
     bloqueado_hasta = models.DateTimeField(null=True, blank=True)
     activo_sistema = models.BooleanField(default=True)
     clave_referencia = models.CharField(
-        max_length=128, blank=True,
-        help_text='Referencia interna de contraseña visible solo al administrador autenticado.',
+        max_length=512, blank=True,
+        help_text='Referencia interna de contraseña, cifrada; visible solo al administrador autenticado.',
     )
 
     class Meta:
@@ -88,7 +88,7 @@ class Paciente(models.Model):
     nombre_madre = models.CharField(max_length=160, blank=True)
     contacto_emergencia_nombre = models.CharField(max_length=160, blank=True)
     contacto_emergencia_telefono = models.CharField(max_length=30, blank=True)
-    fecha_ingreso = models.DateField(default=timezone.now)
+    fecha_ingreso = models.DateField(default=timezone.localdate)
     especialidad = models.CharField(
         max_length=100, blank=True,
         choices=[(e, e) for e in ESPECIALIDADES],
@@ -121,7 +121,7 @@ class Paciente(models.Model):
 
 class Consulta(models.Model):
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='consultas')
-    fecha = models.DateField(default=timezone.now)
+    fecha = models.DateField(default=timezone.localdate)
     hora = models.TimeField(null=True, blank=True)
     especialidad = models.CharField(max_length=100)
     medico = models.CharField(max_length=120, blank=True)
@@ -158,7 +158,7 @@ class Cita(models.Model):
 
 
 class RegistroDiario(models.Model):
-    fecha = models.DateField(unique=True, default=timezone.now)
+    fecha = models.DateField(unique=True, default=timezone.localdate)
     total_pacientes = models.PositiveIntegerField(default=0)
     generado = models.DateTimeField(auto_now=True)
 
@@ -175,7 +175,7 @@ class RegistroDiarioDetalle(models.Model):
 
 class ExpedienteVAS(models.Model):
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='vas')
-    fecha = models.DateField(default=timezone.now)
+    fecha = models.DateField(default=timezone.localdate)
     descripcion = models.TextField()
     estado = models.CharField(max_length=50, default='En trámite')
     observaciones = models.TextField(blank=True)
@@ -203,7 +203,7 @@ class NotaVAS(models.Model):
 
 
 class EstadisticaRegistro(models.Model):
-    fecha = models.DateField(default=timezone.now)
+    fecha = models.DateField(default=timezone.localdate)
     categoria = models.CharField(max_length=80)
     valor = models.CharField(max_length=200)
     cantidad = models.PositiveIntegerField(default=0)

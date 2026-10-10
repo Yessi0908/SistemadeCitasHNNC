@@ -1,0 +1,1295 @@
+python : Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+En <ruta> 113 Carácter: 56
++ ... NG='utf-8'; python manage.py test app -v 2 *> pruebas\pruebas_unitari ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Creating test d...che=shared')...:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+Found 110 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, django_filters, drf_spectacular, messages, rest_framework, rest_framework_simplejwt, staticfiles
+  Apply all migrations: admin, app, auth, contenttypes, sessions, token_blacklist
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying app.0001_initial... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying app.0002_paciente_catalogos... OK
+  Applying app.0003_medico_cita_medico_estados... OK
+  Applying app.0004_usuario_clave_referencia... OK
+  Applying app.0005_alter_medico_especialidad_and_more... OK
+  Applying app.0006_especialidades_preop_nefro_tarde... OK
+  Applying app.0007_especialidades_ekg_videocirugia... OK
+  Applying app.0008_cita_medico_nombre... OK
+  Applying app.0009_nota_vas... OK
+  Applying sessions.0001_initial... OK
+  Applying token_blacklist.0001_initial... OK
+  Applying token_blacklist.0002_outstandingtoken_jti_hex... OK
+  Applying token_blacklist.0003_auto_20171017_2007... OK
+  Applying token_blacklist.0004_auto_20171017_2013... OK
+  Applying token_blacklist.0005_remove_outstandingtoken_jti... OK
+  Applying token_blacklist.0006_auto_20171017_2113... OK
+  Applying token_blacklist.0007_auto_20171017_2214... OK
+  Applying token_blacklist.0008_migrate_to_bigautofield... OK
+  Applying token_blacklist.0010_fix_migrate_to_bigautofield... OK
+  Applying token_blacklist.0011_linearizes_history... OK
+test_bloqueo_expirado_permite_ingresar 
+(app.tests.test_autenticacion.LoginTests.test_bloqueo_expirado_permite_ingresar) ... ok
+test_bloqueo_tras_intentos_fallidos (app.tests.test_autenticacion.LoginTests.test_bloqueo_tras_intentos_fallidos) ... 
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Forbidden: /api/auth/login/
+ok
+test_clave_incorrecta (app.tests.test_autenticacion.LoginTests.test_clave_incorrecta) ... Unauthorized: 
+/api/auth/login/
+ok
+test_login_correcto_entrega_tokens (app.tests.test_autenticacion.LoginTests.test_login_correcto_entrega_tokens) ... ok
+test_login_exitoso_reinicia_contador (app.tests.test_autenticacion.LoginTests.test_login_exitoso_reinicia_contador) 
+... Unauthorized: /api/auth/login/
+ok
+test_usuario_inactivo_no_ingresa (app.tests.test_autenticacion.LoginTests.test_usuario_inactivo_no_ingresa) ... 
+Forbidden: /api/auth/login/
+ok
+test_usuario_inexistente_mismo_mensaje 
+(app.tests.test_autenticacion.LoginTests.test_usuario_inexistente_mismo_mensaje) ... Unauthorized: /api/auth/login/
+ok
+test_logout_invalida_refresh (app.tests.test_autenticacion.SesionTests.test_logout_invalida_refresh) ... Unauthorized: 
+/api/auth/token/refresh/
+ok
+test_perfil (app.tests.test_autenticacion.SesionTests.test_perfil) ... ok
+test_token_invalido_rechazado (app.tests.test_autenticacion.SesionTests.test_token_invalido_rechazado) ... 
+Unauthorized: /api/pacientes/
+ok
+test_desactivar_con_justificacion (app.tests.test_medicos_usuarios.MedicosAPITests.test_desactivar_con_justificacion) 
+... ok
+test_desactivar_exige_justificacion 
+(app.tests.test_medicos_usuarios.MedicosAPITests.test_desactivar_exige_justificacion) ... Bad Request: /api/medicos/1/
+ok
+test_eliminar_conserva_nombre_en_historial 
+(app.tests.test_medicos_usuarios.MedicosAPITests.test_eliminar_conserva_nombre_en_historial) ... ok
+test_no_elimina_medico_con_citas_abiertas 
+(app.tests.test_medicos_usuarios.MedicosAPITests.test_no_elimina_medico_con_citas_abiertas) ... Bad Request: 
+/api/medicos/1/
+ok
+test_admin_no_se_bloquea_a_si_mismo 
+(app.tests.test_medicos_usuarios.UsuariosAPITests.test_admin_no_se_bloquea_a_si_mismo) ... Bad Request: 
+/api/usuarios/1/bloquear/
+ok
+test_admin_no_se_elimina_a_si_mismo 
+(app.tests.test_medicos_usuarios.UsuariosAPITests.test_admin_no_se_elimina_a_si_mismo) ... Bad Request: 
+/api/usuarios/1/
+ok
+test_bloquear_y_reactivar (app.tests.test_medicos_usuarios.UsuariosAPITests.test_bloquear_y_reactivar) ... Forbidden: 
+/api/auth/login/
+ok
+test_crear_usuario_con_hash (app.tests.test_medicos_usuarios.UsuariosAPITests.test_crear_usuario_con_hash) ... ok
+test_respuesta_no_incluye_contrasena 
+(app.tests.test_medicos_usuarios.UsuariosAPITests.test_respuesta_no_incluye_contrasena) ... ok
+test_ver_datos_exige_clave_admin (app.tests.test_medicos_usuarios.UsuariosAPITests.test_ver_datos_exige_clave_admin) 
+... Forbidden: /api/usuarios/6/ver_datos/
+ok
+test_ver_datos_muestra_referencia_al_admin 
+(app.tests.test_medicos_usuarios.UsuariosAPITests.test_ver_datos_muestra_referencia_al_admin) ... ok
+test_especialidad_tarde_antes_de_mediodia_es_invalida 
+(app.tests.test_modelos.CitaModeloTests.test_especialidad_tarde_antes_de_mediodia_es_invalida) ... ok
+test_nota_confirmada_no_se_elimina (app.tests.test_modelos.NotaVASModeloTests.test_nota_confirmada_no_se_elimina) ... 
+ok
+test_nota_confirmada_no_se_modifica (app.tests.test_modelos.NotaVASModeloTests.test_nota_confirmada_no_se_modifica) 
+... ok
+test_dpi_unico (app.tests.test_modelos.PacienteModeloTests.test_dpi_unico) ... ok
+test_edad_se_calcula_al_guardar (app.tests.test_modelos.PacienteModeloTests.test_edad_se_calcula_al_guardar) ... ok
+test_edad_texto_sin_fecha (app.tests.test_modelos.PacienteModeloTests.test_edad_texto_sin_fecha) ... ok
+test_nombre_completo_omite_vacios (app.tests.test_modelos.PacienteModeloTests.test_nombre_completo_omite_vacios) ... ok
+test_agendar_cita (app.tests.test_pacientes_citas.CitasAPITests.test_agendar_cita) ... ok
+test_alertas_de_manana (app.tests.test_pacientes_citas.CitasAPITests.test_alertas_de_manana) ... ok
+test_archivo_filtra_citas_por_fecha (app.tests.test_pacientes_citas.CitasAPITests.test_archivo_filtra_citas_por_fecha) 
+... ok
+test_rechaza_fecha_pasada (app.tests.test_pacientes_citas.CitasAPITests.test_rechaza_fecha_pasada) ... Bad Request: 
+/api/citas/
+ok
+test_rechaza_tarde_en_la_manana (app.tests.test_pacientes_citas.CitasAPITests.test_rechaza_tarde_en_la_manana) ... Bad 
+Request: /api/citas/
+ok
+test_busqueda_por_dpi_parcial (app.tests.test_pacientes_citas.PacientesAPITests.test_busqueda_por_dpi_parcial) ... ok
+test_busqueda_vacia (app.tests.test_pacientes_citas.PacientesAPITests.test_busqueda_vacia) ... ok
+test_cambio_de_estado_queda_en_bitacora 
+(app.tests.test_pacientes_citas.PacientesAPITests.test_cambio_de_estado_queda_en_bitacora) ... ok
+test_catalogos_solo_medicos_activos 
+(app.tests.test_pacientes_citas.PacientesAPITests.test_catalogos_solo_medicos_activos) ... ok
+test_crear_paciente_asigna_expediente 
+(app.tests.test_pacientes_citas.PacientesAPITests.test_crear_paciente_asigna_expediente) ... Internal Server Error: 
+/api/pacientes/
+Traceback (most recent call last):
+  File "<python>\Lib\site-packages\django\core\handlers\exception.py", 
+line 55, in inner
+    response = get_response(request)
+  File "<python>\Lib\site-packages\django\core\handlers\base.py", line 
+198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "<python>\Lib\site-packages\django\views\decorators\csrf.py", 
+line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\viewsets.py", line 
+124, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 509, 
+in dispatch
+    response = self.handle_exception(exc)
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 469, 
+in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 480, 
+in raise_uncaught_exception
+    raise exc
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 506, 
+in dispatch
+    response = handler(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\mixins.py", line 20, 
+in create
+    headers = self.get_success_headers(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+571, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+249, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+538, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\fields.py", line 1272, 
+in to_representation
+    assert not isinstance(value, datetime.datetime), (
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Expected a `date`, but got a `datetime`. Refusing to coerce, as this may mean losing timezone 
+information. Use a custom read-only field and deal with timezone issues explicitly.
+FAIL
+test_crear_paciente_sin_fecha_ingreso_usa_hoy 
+(app.tests.test_pacientes_citas.PacientesAPITests.test_crear_paciente_sin_fecha_ingreso_usa_hoy) ... Internal Server 
+Error: /api/pacientes/
+Traceback (most recent call last):
+  File "<python>\Lib\site-packages\django\core\handlers\exception.py", 
+line 55, in inner
+    response = get_response(request)
+  File "<python>\Lib\site-packages\django\core\handlers\base.py", line 
+198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "<python>\Lib\site-packages\django\views\decorators\csrf.py", 
+line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\viewsets.py", line 
+124, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 509, 
+in dispatch
+    response = self.handle_exception(exc)
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 469, 
+in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 480, 
+in raise_uncaught_exception
+    raise exc
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 506, 
+in dispatch
+    response = handler(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\mixins.py", line 20, 
+in create
+    headers = self.get_success_headers(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+571, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+249, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+538, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\fields.py", line 1272, 
+in to_representation
+    assert not isinstance(value, datetime.datetime), (
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Expected a `date`, but got a `datetime`. Refusing to coerce, as this may mean losing timezone 
+information. Use a custom read-only field and deal with timezone issues explicitly.
+FAIL
+test_eliminar_paciente (app.tests.test_pacientes_citas.PacientesAPITests.test_eliminar_paciente) ... ok
+test_expediente_no_se_puede_alterar 
+(app.tests.test_pacientes_citas.PacientesAPITests.test_expediente_no_se_puede_alterar) ... ok
+test_resumen_de_citas_separa_proximas_e_historial 
+(app.tests.test_pacientes_citas.PacientesAPITests.test_resumen_de_citas_separa_proximas_e_historial) ... ok
+test_acceso_por_rol (app.tests.test_permisos.MatrizPermisosTests.test_acceso_por_rol) ... Forbidden: /api/pacientes/
+Forbidden: /api/citas/
+Forbidden: /api/citas/
+<python>\Lib\site-packages\rest_framework\pagination.py:207: 
+UnorderedObjectListWarning: Pagination may yield inconsistent results with an unordered object_list: <class 
+'app.models.Usuario'> QuerySet.
+  paginator = self.django_paginator_class(queryset, page_size)
+Forbidden: /api/usuarios/
+Forbidden: /api/usuarios/
+Forbidden: /api/usuarios/
+Forbidden: /api/usuarios/
+Forbidden: /api/bitacora/
+Forbidden: /api/bitacora/
+Forbidden: /api/bitacora/
+Forbidden: /api/bitacora/
+Forbidden: /api/vas/
+Forbidden: /api/vas/
+Forbidden: /api/vas/
+Forbidden: /api/estadistica/resumen_tablas/
+Forbidden: /api/estadistica/resumen_tablas/
+Forbidden: /api/estadistica/resumen_tablas/
+Forbidden: /api/registros/buscar/
+Forbidden: /api/registros/buscar/
+Forbidden: /api/registros/buscar/
+Forbidden: /api/archivo/buscar/
+Forbidden: /api/archivo/buscar/
+Forbidden: /api/archivo/buscar/
+Forbidden: /api/registro-diario/
+Forbidden: /api/registro-diario/
+Forbidden: /api/respaldo/
+Forbidden: /api/respaldo/
+Forbidden: /api/respaldo/
+Forbidden: /api/respaldo/
+ok
+test_anonimo_recibe_401 (app.tests.test_permisos.MatrizPermisosTests.test_anonimo_recibe_401) ... Unauthorized: 
+/api/pacientes/
+Unauthorized: /api/citas/
+Unauthorized: /api/usuarios/
+Unauthorized: /api/bitacora/
+Unauthorized: /api/vas/
+Unauthorized: /api/estadistica/resumen_tablas/
+Unauthorized: /api/registros/buscar/
+Unauthorized: /api/archivo/buscar/
+Unauthorized: /api/registro-diario/
+Unauthorized: /api/respaldo/
+ok
+test_archivo_no_agenda_citas (app.tests.test_permisos.MatrizPermisosTests.test_archivo_no_agenda_citas) ... Forbidden: 
+/api/citas/
+ok
+test_archivo_solo_lectura_en_pacientes 
+(app.tests.test_permisos.MatrizPermisosTests.test_archivo_solo_lectura_en_pacientes) ... Forbidden: /api/pacientes/
+ok
+test_estadistica_no_crea_pacientes (app.tests.test_permisos.MatrizPermisosTests.test_estadistica_no_crea_pacientes) 
+... Forbidden: /api/pacientes/
+ok
+test_solo_admin_crea_medicos (app.tests.test_permisos.MatrizPermisosTests.test_solo_admin_crea_medicos) ... Forbidden: 
+/api/medicos/
+ok
+test_rechaza_contrasenas_debiles (app.tests.test_seguridad.ContrasenasTests.test_rechaza_contrasenas_debiles) ... 
+  test_rechaza_contrasenas_debiles (app.tests.test_seguridad.ContrasenasTests.test_rechaza_contrasenas_debiles) 
+(clave='12345678') ... FAIL
+Bad Request: /api/usuarios/
+Bad Request: /api/usuarios/
+Bad Request: /api/usuarios/
+test_referencia_no_se_guarda_en_texto_plano 
+(app.tests.test_seguridad.ContrasenasTests.test_referencia_no_se_guarda_en_texto_plano) ... FAIL
+test_registro_diario_paciente_inexistente 
+(app.tests.test_seguridad.DisponibilidadTests.test_registro_diario_paciente_inexistente) ... Internal Server Error: 
+/api/registro-diario/
+Traceback (most recent call last):
+  File "<python>\Lib\site-packages\django\core\handlers\exception.py", 
+line 55, in inner
+    response = get_response(request)
+  File "<python>\Lib\site-packages\django\core\handlers\base.py", line 
+198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "<python>\Lib\site-packages\django\views\decorators\csrf.py", 
+line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\django\views\generic\base.py", line 
+106, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 509, 
+in dispatch
+    response = self.handle_exception(exc)
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 469, 
+in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 480, 
+in raise_uncaught_exception
+    raise exc
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 506, 
+in dispatch
+    response = handler(request, *args, **kwargs)
+  File "app\views.py", line 873, in post
+    paciente = Paciente.objects.get(pk=paciente_id)
+  File "<python>\Lib\site-packages\django\db\models\manager.py", line 
+87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\db\models\query.py", line 639, 
+in get
+    raise self.model.DoesNotExist(
+        "%s matching query does not exist." % self.model._meta.object_name
+    )
+app.models.Paciente.DoesNotExist: Paciente matching query does not exist.
+ERROR
+test_registro_diario_sin_paciente (app.tests.test_seguridad.DisponibilidadTests.test_registro_diario_sin_paciente) ... 
+Internal Server Error: /api/registro-diario/
+Traceback (most recent call last):
+  File "<python>\Lib\site-packages\django\core\handlers\exception.py", 
+line 55, in inner
+    response = get_response(request)
+  File "<python>\Lib\site-packages\django\core\handlers\base.py", line 
+198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "<python>\Lib\site-packages\django\views\decorators\csrf.py", 
+line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\django\views\generic\base.py", line 
+106, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 509, 
+in dispatch
+    response = self.handle_exception(exc)
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 469, 
+in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 480, 
+in raise_uncaught_exception
+    raise exc
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 506, 
+in dispatch
+    response = handler(request, *args, **kwargs)
+  File "app\views.py", line 873, in post
+    paciente = Paciente.objects.get(pk=paciente_id)
+  File "<python>\Lib\site-packages\django\db\models\manager.py", line 
+87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\db\models\query.py", line 639, 
+in get
+    raise self.model.DoesNotExist(
+        "%s matching query does not exist." % self.model._meta.object_name
+    )
+app.models.Paciente.DoesNotExist: Paciente matching query does not exist.
+ERROR
+test_cabecera_csp (app.tests.test_seguridad.ExposicionTests.test_cabecera_csp) ... FAIL
+test_cabeceras_basicas (app.tests.test_seguridad.ExposicionTests.test_cabeceras_basicas) ... ok
+test_esquema_api_no_es_publico (app.tests.test_seguridad.ExposicionTests.test_esquema_api_no_es_publico) ... 
+app\views.py: Error [busqueda_archivo]: unable to guess serializer. This is 
+graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [archivo_buscar_citas]: unable to guess serializer. This 
+is graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [LoginView]: unable to guess serializer. This is 
+graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [LogoutView]: unable to guess serializer. This is 
+graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [mi_perfil]: unable to guess serializer. This is 
+graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [catalogos_paciente]: unable to guess serializer. This 
+is graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [RegistroDiarioView]: unable to guess serializer. This 
+is graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [busqueda_registros]: unable to guess serializer. This 
+is graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [RespaldoView]: unable to guess serializer. This is 
+graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\serializers.py: Warning [UsuarioViewSet > UsuarioSerializer]: unable to 
+resolve type hint for function "get_estado". Consider using a type hint or @extend_schema_field. Defaulting to string.
+FAIL
+test_esquema_api_para_admin_con_sesion 
+(app.tests.test_seguridad.ExposicionTests.test_esquema_api_para_admin_con_sesion) ... 
+app\views.py: Error [busqueda_archivo]: unable to guess serializer. This is 
+graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [archivo_buscar_citas]: unable to guess serializer. This 
+is graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [LoginView]: unable to guess serializer. This is 
+graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [LogoutView]: unable to guess serializer. This is 
+graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [mi_perfil]: unable to guess serializer. This is 
+graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [catalogos_paciente]: unable to guess serializer. This 
+is graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [RegistroDiarioView]: unable to guess serializer. This 
+is graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [busqueda_registros]: unable to guess serializer. This 
+is graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\views.py: Error [RespaldoView]: unable to guess serializer. This is 
+graceful fallback handling for APIViews. Consider using GenericAPIView as view base class, if view is under your 
+control. Either way you may want to add a serializer_class (or method). Ignoring view for now.
+app\serializers.py: Warning [UsuarioViewSet > UsuarioSerializer]: unable to 
+resolve type hint for function "get_estado". Consider using a type hint or @extend_schema_field. Defaulting to string.
+ok
+test_ip_de_bitacora_no_se_falsifica (app.tests.test_seguridad.LoginSeguroTests.test_ip_de_bitacora_no_se_falsifica) 
+... Unauthorized: /api/auth/login/
+FAIL
+test_limite_de_intentos_por_ip (app.tests.test_seguridad.LoginSeguroTests.test_limite_de_intentos_por_ip) ... 
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+Unauthorized: /api/auth/login/
+FAIL
+test_no_revela_cuenta_inactiva_sin_clave_correcta 
+(app.tests.test_seguridad.LoginSeguroTests.test_no_revela_cuenta_inactiva_sin_clave_correcta) ... Forbidden: 
+/api/auth/login/
+Unauthorized: /api/auth/login/
+FAIL
+test_acepta_texto_normal_con_simbolos (app.tests.test_seguridad.XSSTests.test_acepta_texto_normal_con_simbolos) ... 
+Internal Server Error: /api/pacientes/
+Traceback (most recent call last):
+  File "<python>\Lib\site-packages\django\core\handlers\exception.py", 
+line 55, in inner
+    response = get_response(request)
+  File "<python>\Lib\site-packages\django\core\handlers\base.py", line 
+198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "<python>\Lib\site-packages\django\views\decorators\csrf.py", 
+line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\viewsets.py", line 
+124, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 509, 
+in dispatch
+    response = self.handle_exception(exc)
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 469, 
+in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 480, 
+in raise_uncaught_exception
+    raise exc
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 506, 
+in dispatch
+    response = handler(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\mixins.py", line 20, 
+in create
+    headers = self.get_success_headers(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+571, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+249, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+538, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\fields.py", line 1272, 
+in to_representation
+    assert not isinstance(value, datetime.datetime), (
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Expected a `date`, but got a `datetime`. Refusing to coerce, as this may mean losing timezone 
+information. Use a custom read-only field and deal with timezone issues explicitly.
+FAIL
+test_rechaza_html_en_medico (app.tests.test_seguridad.XSSTests.test_rechaza_html_en_medico) ... FAIL
+test_rechaza_html_en_nota_vas (app.tests.test_seguridad.XSSTests.test_rechaza_html_en_nota_vas) ... FAIL
+test_rechaza_html_en_paciente (app.tests.test_seguridad.XSSTests.test_rechaza_html_en_paciente) ... Internal Server 
+Error: /api/pacientes/
+Traceback (most recent call last):
+  File "<python>\Lib\site-packages\django\core\handlers\exception.py", 
+line 55, in inner
+    response = get_response(request)
+  File "<python>\Lib\site-packages\django\core\handlers\base.py", line 
+198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "<python>\Lib\site-packages\django\views\decorators\csrf.py", 
+line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\viewsets.py", line 
+124, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 509, 
+in dispatch
+    response = self.handle_exception(exc)
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 469, 
+in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 480, 
+in raise_uncaught_exception
+    raise exc
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 506, 
+in dispatch
+    response = handler(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\mixins.py", line 20, 
+in create
+    headers = self.get_success_headers(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+571, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+249, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+538, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\fields.py", line 1272, 
+in to_representation
+    assert not isinstance(value, datetime.datetime), (
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Expected a `date`, but got a `datetime`. Refusing to coerce, as this may mean losing timezone 
+information. Use a custom read-only field and deal with timezone issues explicitly.
+
+  test_rechaza_html_en_paciente (app.tests.test_seguridad.XSSTests.test_rechaza_html_en_paciente) 
+(carga='<script>alert(1)</script>') ... FAIL
+Bad Request: /api/pacientes/
+Bad Request: /api/pacientes/
+test_cita_valida (app.tests.test_serializers.CitaSerializerTests.test_cita_valida) ... ok
+test_especialidad_tarde_en_la_manana 
+(app.tests.test_serializers.CitaSerializerTests.test_especialidad_tarde_en_la_manana) ... ok
+test_estado_invalido (app.tests.test_serializers.CitaSerializerTests.test_estado_invalido) ... ok
+test_fecha_pasada (app.tests.test_serializers.CitaSerializerTests.test_fecha_pasada) ... ok
+test_medico_de_otra_especialidad (app.tests.test_serializers.CitaSerializerTests.test_medico_de_otra_especialidad) ... 
+ok
+test_sin_medico (app.tests.test_serializers.CitaSerializerTests.test_sin_medico) ... ok
+test_especialidad_invalida (app.tests.test_serializers.MedicoSerializerTests.test_especialidad_invalida) ... ok
+test_mismo_nombre_otra_especialidad 
+(app.tests.test_serializers.MedicoSerializerTests.test_mismo_nombre_otra_especialidad) ... ok
+test_nombre_duplicado_misma_especialidad 
+(app.tests.test_serializers.MedicoSerializerTests.test_nombre_duplicado_misma_especialidad) ... ok
+test_datos_validos (app.tests.test_serializers.PacienteSerializerTests.test_datos_validos) ... ok
+test_dpi_duplicado (app.tests.test_serializers.PacienteSerializerTests.test_dpi_duplicado) ... ok
+test_dpi_se_normaliza (app.tests.test_serializers.PacienteSerializerTests.test_dpi_se_normaliza) ... ok
+test_fecha_ingreso_futura (app.tests.test_serializers.PacienteSerializerTests.test_fecha_ingreso_futura) ... ok
+test_fecha_nacimiento_futura (app.tests.test_serializers.PacienteSerializerTests.test_fecha_nacimiento_futura) ... ok
+test_usuario_duplicado_sin_importar_mayusculas 
+(app.tests.test_serializers.UsuarioCrearSerializerTests.test_usuario_duplicado_sin_importar_mayusculas) ... ok
+test_bitacora_recorta_detalle_a_1000 
+(app.tests.test_utilidades.BloqueoYBitacoraTests.test_bitacora_recorta_detalle_a_1000) ... ok
+test_obtener_ip_directa (app.tests.test_utilidades.BloqueoYBitacoraTests.test_obtener_ip_directa) ... ok
+test_usuario_bloqueado_mientras_no_expira 
+(app.tests.test_utilidades.BloqueoYBitacoraTests.test_usuario_bloqueado_mientras_no_expira) ... ok
+test_usuario_desbloqueado_al_expirar 
+(app.tests.test_utilidades.BloqueoYBitacoraTests.test_usuario_desbloqueado_al_expirar) ... ok
+test_despues_de_99_avanza_correlativo 
+(app.tests.test_utilidades.NumeroExpedienteTests.test_despues_de_99_avanza_correlativo) ... ok
+test_ignora_expedientes_de_otros_anios 
+(app.tests.test_utilidades.NumeroExpedienteTests.test_ignora_expedientes_de_otros_anios) ... ok
+test_incrementa_sufijo (app.tests.test_utilidades.NumeroExpedienteTests.test_incrementa_sufijo) ... ok
+test_primer_expediente_del_anio (app.tests.test_utilidades.NumeroExpedienteTests.test_primer_expediente_del_anio) ... 
+ok
+test_carnet (app.tests.test_vas_documentos.DocumentosTests.test_carnet) ... ok
+test_constancia (app.tests.test_vas_documentos.DocumentosTests.test_constancia) ... ok
+test_exportar_excel (app.tests.test_vas_documentos.DocumentosTests.test_exportar_excel) ... ok
+test_hoja_expediente (app.tests.test_vas_documentos.DocumentosTests.test_hoja_expediente) ... ok
+test_juridico_no_imprime_carnet (app.tests.test_vas_documentos.DocumentosTests.test_juridico_no_imprime_carnet) ... 
+Forbidden: /api/pacientes/1/carnet/
+ok
+test_registro_diario_fecha_futura (app.tests.test_vas_documentos.DocumentosTests.test_registro_diario_fecha_futura) 
+... Bad Request: /api/registro-diario/
+ok
+test_registro_diario_incluye_citas_e_ingresos 
+(app.tests.test_vas_documentos.DocumentosTests.test_registro_diario_incluye_citas_e_ingresos) ... ok
+test_registro_diario_pdf (app.tests.test_vas_documentos.DocumentosTests.test_registro_diario_pdf) ... ok
+test_ciclo_de_nota (app.tests.test_vas_documentos.VASAPITests.test_ciclo_de_nota) ... ok
+test_detalle_de_paciente_no_vas (app.tests.test_vas_documentos.VASAPITests.test_detalle_de_paciente_no_vas) ... Not 
+Found: /api/vas/paciente/2/detalle/
+ok
+test_lista_solo_pacientes_vas (app.tests.test_vas_documentos.VASAPITests.test_lista_solo_pacientes_vas) ... ok
+test_nota_confirmada_es_inmutable_por_api 
+(app.tests.test_vas_documentos.VASAPITests.test_nota_confirmada_es_inmutable_por_api) ... Forbidden: 
+/api/vas/notas/1/editar/
+Forbidden: /api/vas/notas/1/confirmar/
+ok
+test_nota_muy_corta (app.tests.test_vas_documentos.VASAPITests.test_nota_muy_corta) ... Bad Request: 
+/api/vas/paciente/1/notas/
+ok
+test_cumpleanios_exacto (app.tests.test_utilidades.CalculoEdadTests.test_cumpleanios_exacto) ... ok
+test_recien_nacido (app.tests.test_utilidades.CalculoEdadTests.test_recien_nacido) ... ok
+test_sin_fecha_devuelve_ceros (app.tests.test_utilidades.CalculoEdadTests.test_sin_fecha_devuelve_ceros) ... ok
+test_texto_de_edad (app.tests.test_utilidades.CalculoEdadTests.test_texto_de_edad) ... ok
+test_un_dia_antes_del_cumpleanios (app.tests.test_utilidades.CalculoEdadTests.test_un_dia_antes_del_cumpleanios) ... ok
+test_especialidad_normal_acepta_manana 
+(app.tests.test_utilidades.CatalogosTests.test_especialidad_normal_acepta_manana) ... ok
+test_especialidades_sin_duplicados (app.tests.test_utilidades.CatalogosTests.test_especialidades_sin_duplicados) ... ok
+test_especialidades_tarde_existen_en_catalogo 
+(app.tests.test_utilidades.CatalogosTests.test_especialidades_tarde_existen_en_catalogo) ... ok
+test_sin_hora_no_bloquea (app.tests.test_utilidades.CatalogosTests.test_sin_hora_no_bloquea) ... ok
+test_tarde_acepta_desde_mediodia (app.tests.test_utilidades.CatalogosTests.test_tarde_acepta_desde_mediodia) ... ok
+test_tarde_rechaza_antes_de_mediodia (app.tests.test_utilidades.CatalogosTests.test_tarde_rechaza_antes_de_mediodia) 
+... ok
+
+======================================================================
+ERROR: test_registro_diario_paciente_inexistente 
+(app.tests.test_seguridad.DisponibilidadTests.test_registro_diario_paciente_inexistente)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "app\tests\test_seguridad.py", line 97, in 
+test_registro_diario_paciente_inexistente
+    r = self.cliente(Rol.REGISTROS).post(
+        '/api/registro-diario/', {'fecha': str(date.today()), 'paciente_id': 999999}, format='json',
+    )
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 295, in 
+post
+    response = super().post(
+        path, data=data, format=format, content_type=content_type, **extra)
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 209, in 
+post
+    return self.generic('POST', path, data, content_type, **extra)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 233, in 
+generic
+    return super().generic(
+           ~~~~~~~~~~~~~~~^
+        method, path, data, content_type, secure, **extra)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\test\client.py", line 671, in 
+generic
+    return self.request(**r)
+           ~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 285, in 
+request
+    return super().request(**kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 237, in 
+request
+    request = super().request(**kwargs)
+  File "<python>\Lib\site-packages\django\test\client.py", line 1090, in 
+request
+    self.check_exception(response)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\test\client.py", line 805, in 
+check_exception
+    raise exc_value
+  File "<python>\Lib\site-packages\django\core\handlers\exception.py", 
+line 55, in inner
+    response = get_response(request)
+  File "<python>\Lib\site-packages\django\core\handlers\base.py", line 
+198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "<python>\Lib\site-packages\django\views\decorators\csrf.py", 
+line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\django\views\generic\base.py", line 
+106, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 509, 
+in dispatch
+    response = self.handle_exception(exc)
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 469, 
+in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 480, 
+in raise_uncaught_exception
+    raise exc
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 506, 
+in dispatch
+    response = handler(request, *args, **kwargs)
+  File "app\views.py", line 873, in post
+    paciente = Paciente.objects.get(pk=paciente_id)
+  File "<python>\Lib\site-packages\django\db\models\manager.py", line 
+87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\db\models\query.py", line 639, 
+in get
+    raise self.model.DoesNotExist(
+        "%s matching query does not exist." % self.model._meta.object_name
+    )
+app.models.Paciente.DoesNotExist: Paciente matching query does not exist.
+
+======================================================================
+ERROR: test_registro_diario_sin_paciente 
+(app.tests.test_seguridad.DisponibilidadTests.test_registro_diario_sin_paciente)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "app\tests\test_seguridad.py", line 103, in 
+test_registro_diario_sin_paciente
+    r = self.cliente(Rol.REGISTROS).post('/api/registro-diario/', {'fecha': str(date.today())}, format='json')
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 295, in 
+post
+    response = super().post(
+        path, data=data, format=format, content_type=content_type, **extra)
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 209, in 
+post
+    return self.generic('POST', path, data, content_type, **extra)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 233, in 
+generic
+    return super().generic(
+           ~~~~~~~~~~~~~~~^
+        method, path, data, content_type, secure, **extra)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\test\client.py", line 671, in 
+generic
+    return self.request(**r)
+           ~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 285, in 
+request
+    return super().request(**kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 237, in 
+request
+    request = super().request(**kwargs)
+  File "<python>\Lib\site-packages\django\test\client.py", line 1090, in 
+request
+    self.check_exception(response)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\test\client.py", line 805, in 
+check_exception
+    raise exc_value
+  File "<python>\Lib\site-packages\django\core\handlers\exception.py", 
+line 55, in inner
+    response = get_response(request)
+  File "<python>\Lib\site-packages\django\core\handlers\base.py", line 
+198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "<python>\Lib\site-packages\django\views\decorators\csrf.py", 
+line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\django\views\generic\base.py", line 
+106, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 509, 
+in dispatch
+    response = self.handle_exception(exc)
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 469, 
+in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 480, 
+in raise_uncaught_exception
+    raise exc
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 506, 
+in dispatch
+    response = handler(request, *args, **kwargs)
+  File "app\views.py", line 873, in post
+    paciente = Paciente.objects.get(pk=paciente_id)
+  File "<python>\Lib\site-packages\django\db\models\manager.py", line 
+87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\db\models\query.py", line 639, 
+in get
+    raise self.model.DoesNotExist(
+        "%s matching query does not exist." % self.model._meta.object_name
+    )
+app.models.Paciente.DoesNotExist: Paciente matching query does not exist.
+
+======================================================================
+FAIL: test_crear_paciente_asigna_expediente 
+(app.tests.test_pacientes_citas.PacientesAPITests.test_crear_paciente_asigna_expediente)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "app\tests\test_pacientes_citas.py", line 13, in 
+test_crear_paciente_asigna_expediente
+    r = self.cliente(Rol.REGISTROS).post('/api/pacientes/', PACIENTE_VALIDO, format='json')
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 295, in 
+post
+    response = super().post(
+        path, data=data, format=format, content_type=content_type, **extra)
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 209, in 
+post
+    return self.generic('POST', path, data, content_type, **extra)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 233, in 
+generic
+    return super().generic(
+           ~~~~~~~~~~~~~~~^
+        method, path, data, content_type, secure, **extra)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\test\client.py", line 671, in 
+generic
+    return self.request(**r)
+           ~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 285, in 
+request
+    return super().request(**kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 237, in 
+request
+    request = super().request(**kwargs)
+  File "<python>\Lib\site-packages\django\test\client.py", line 1090, in 
+request
+    self.check_exception(response)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\test\client.py", line 805, in 
+check_exception
+    raise exc_value
+  File "<python>\Lib\site-packages\django\core\handlers\exception.py", 
+line 55, in inner
+    response = get_response(request)
+  File "<python>\Lib\site-packages\django\core\handlers\base.py", line 
+198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "<python>\Lib\site-packages\django\views\decorators\csrf.py", 
+line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\viewsets.py", line 
+124, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 509, 
+in dispatch
+    response = self.handle_exception(exc)
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 469, 
+in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 480, 
+in raise_uncaught_exception
+    raise exc
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 506, 
+in dispatch
+    response = handler(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\mixins.py", line 20, 
+in create
+    headers = self.get_success_headers(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+571, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+249, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+538, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\fields.py", line 1272, 
+in to_representation
+    assert not isinstance(value, datetime.datetime), (
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Expected a `date`, but got a `datetime`. Refusing to coerce, as this may mean losing timezone 
+information. Use a custom read-only field and deal with timezone issues explicitly.
+
+======================================================================
+FAIL: test_crear_paciente_sin_fecha_ingreso_usa_hoy 
+(app.tests.test_pacientes_citas.PacientesAPITests.test_crear_paciente_sin_fecha_ingreso_usa_hoy)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "app\tests\test_pacientes_citas.py", line 20, in 
+test_crear_paciente_sin_fecha_ingreso_usa_hoy
+    r = self.cliente(Rol.REGISTROS).post('/api/pacientes/', datos, format='json')
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 295, in 
+post
+    response = super().post(
+        path, data=data, format=format, content_type=content_type, **extra)
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 209, in 
+post
+    return self.generic('POST', path, data, content_type, **extra)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 233, in 
+generic
+    return super().generic(
+           ~~~~~~~~~~~~~~~^
+        method, path, data, content_type, secure, **extra)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\test\client.py", line 671, in 
+generic
+    return self.request(**r)
+           ~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 285, in 
+request
+    return super().request(**kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 237, in 
+request
+    request = super().request(**kwargs)
+  File "<python>\Lib\site-packages\django\test\client.py", line 1090, in 
+request
+    self.check_exception(response)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\test\client.py", line 805, in 
+check_exception
+    raise exc_value
+  File "<python>\Lib\site-packages\django\core\handlers\exception.py", 
+line 55, in inner
+    response = get_response(request)
+  File "<python>\Lib\site-packages\django\core\handlers\base.py", line 
+198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "<python>\Lib\site-packages\django\views\decorators\csrf.py", 
+line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\viewsets.py", line 
+124, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 509, 
+in dispatch
+    response = self.handle_exception(exc)
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 469, 
+in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 480, 
+in raise_uncaught_exception
+    raise exc
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 506, 
+in dispatch
+    response = handler(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\mixins.py", line 20, 
+in create
+    headers = self.get_success_headers(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+571, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+249, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+538, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\fields.py", line 1272, 
+in to_representation
+    assert not isinstance(value, datetime.datetime), (
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Expected a `date`, but got a `datetime`. Refusing to coerce, as this may mean losing timezone 
+information. Use a custom read-only field and deal with timezone issues explicitly.
+
+======================================================================
+FAIL: test_rechaza_contrasenas_debiles (app.tests.test_seguridad.ContrasenasTests.test_rechaza_contrasenas_debiles) 
+(clave='12345678')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "app\tests\test_seguridad.py", line 47, in 
+test_rechaza_contrasenas_debiles
+    self.assertEqual(self.crear(debil).status_code, 400)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 201 != 400
+
+======================================================================
+FAIL: test_referencia_no_se_guarda_en_texto_plano 
+(app.tests.test_seguridad.ContrasenasTests.test_referencia_no_se_guarda_en_texto_plano)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "app\tests\test_seguridad.py", line 52, in 
+test_referencia_no_se_guarda_en_texto_plano
+    self.assertNotIn('Referencia#Segura77', u.clave_referencia)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'Referencia#Segura77' unexpectedly found in 'Referencia#Segura77'
+
+======================================================================
+FAIL: test_cabecera_csp (app.tests.test_seguridad.ExposicionTests.test_cabecera_csp)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "app\tests\test_seguridad.py", line 86, in test_cabecera_csp
+    self.assertIn("default-src 'self'", r.get('Content-Security-Policy', ''))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "default-src 'self'" not found in ''
+
+======================================================================
+FAIL: test_esquema_api_no_es_publico (app.tests.test_seguridad.ExposicionTests.test_esquema_api_no_es_publico)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "app\tests\test_seguridad.py", line 77, in 
+test_esquema_api_no_es_publico
+    self.assertIn(APIClient().get('/api/schema/').status_code, (401, 403, 404))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 200 not found in (401, 403, 404)
+
+======================================================================
+FAIL: test_ip_de_bitacora_no_se_falsifica 
+(app.tests.test_seguridad.LoginSeguroTests.test_ip_de_bitacora_no_se_falsifica)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "app\tests\test_seguridad.py", line 72, in 
+test_ip_de_bitacora_no_se_falsifica
+    self.assertNotEqual(Bitacora.objects.get(usuario='xff').ip, '203.0.113.66')
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: '203.0.113.66' == '203.0.113.66'
+
+======================================================================
+FAIL: test_limite_de_intentos_por_ip (app.tests.test_seguridad.LoginSeguroTests.test_limite_de_intentos_por_ip)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "app\tests\test_seguridad.py", line 68, in 
+test_limite_de_intentos_por_ip
+    self.assertIn(429, codigos)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^
+AssertionError: 429 not found in [401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401]
+
+======================================================================
+FAIL: test_no_revela_cuenta_inactiva_sin_clave_correcta 
+(app.tests.test_seguridad.LoginSeguroTests.test_no_revela_cuenta_inactiva_sin_clave_correcta)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "app\tests\test_seguridad.py", line 63, in 
+test_no_revela_cuenta_inactiva_sin_clave_correcta
+    self.assertEqual(inactivo.status_code, inexistente.status_code)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 403 != 401
+
+======================================================================
+FAIL: test_acepta_texto_normal_con_simbolos (app.tests.test_seguridad.XSSTests.test_acepta_texto_normal_con_simbolos)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "app\tests\test_seguridad.py", line 32, in 
+test_acepta_texto_normal_con_simbolos
+    r = self.cliente(Rol.REGISTROS).post(
+        '/api/pacientes/', {**PACIENTE_VALIDO, 'direccion': '5a. Av. 3-20 "Zona 1" & Col. O\'Hara'}, format='json',
+    )
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 295, in 
+post
+    response = super().post(
+        path, data=data, format=format, content_type=content_type, **extra)
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 209, in 
+post
+    return self.generic('POST', path, data, content_type, **extra)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 233, in 
+generic
+    return super().generic(
+           ~~~~~~~~~~~~~~~^
+        method, path, data, content_type, secure, **extra)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\test\client.py", line 671, in 
+generic
+    return self.request(**r)
+           ~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 285, in 
+request
+    return super().request(**kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 237, in 
+request
+    request = super().request(**kwargs)
+  File "<python>\Lib\site-packages\django\test\client.py", line 1090, in 
+request
+    self.check_exception(response)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\test\client.py", line 805, in 
+check_exception
+    raise exc_value
+  File "<python>\Lib\site-packages\django\core\handlers\exception.py", 
+line 55, in inner
+    response = get_response(request)
+  File "<python>\Lib\site-packages\django\core\handlers\base.py", line 
+198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "<python>\Lib\site-packages\django\views\decorators\csrf.py", 
+line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\viewsets.py", line 
+124, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 509, 
+in dispatch
+    response = self.handle_exception(exc)
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 469, 
+in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 480, 
+in raise_uncaught_exception
+    raise exc
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 506, 
+in dispatch
+    response = handler(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\mixins.py", line 20, 
+in create
+    headers = self.get_success_headers(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+571, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+249, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+538, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\fields.py", line 1272, 
+in to_representation
+    assert not isinstance(value, datetime.datetime), (
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Expected a `date`, but got a `datetime`. Refusing to coerce, as this may mean losing timezone 
+information. Use a custom read-only field and deal with timezone issues explicitly.
+
+======================================================================
+FAIL: test_rechaza_html_en_medico (app.tests.test_seguridad.XSSTests.test_rechaza_html_en_medico)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "app\tests\test_seguridad.py", line 24, in test_rechaza_html_en_medico
+    self.assertEqual(r.status_code, 400)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+AssertionError: 201 != 400
+
+======================================================================
+FAIL: test_rechaza_html_en_nota_vas (app.tests.test_seguridad.XSSTests.test_rechaza_html_en_nota_vas)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "app\tests\test_seguridad.py", line 29, in 
+test_rechaza_html_en_nota_vas
+    self.assertEqual(r.status_code, 400)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+AssertionError: 201 != 400
+
+======================================================================
+FAIL: test_rechaza_html_en_paciente (app.tests.test_seguridad.XSSTests.test_rechaza_html_en_paciente) 
+(carga='<script>alert(1)</script>')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "app\tests\test_seguridad.py", line 15, in 
+test_rechaza_html_en_paciente
+    r = self.cliente(Rol.REGISTROS).post(
+        '/api/pacientes/', {**PACIENTE_VALIDO, 'primer_nombre': carga}, format='json',
+    )
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 295, in 
+post
+    response = super().post(
+        path, data=data, format=format, content_type=content_type, **extra)
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 209, in 
+post
+    return self.generic('POST', path, data, content_type, **extra)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 233, in 
+generic
+    return super().generic(
+           ~~~~~~~~~~~~~~~^
+        method, path, data, content_type, secure, **extra)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\test\client.py", line 671, in 
+generic
+    return self.request(**r)
+           ~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 285, in 
+request
+    return super().request(**kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\test.py", line 237, in 
+request
+    request = super().request(**kwargs)
+  File "<python>\Lib\site-packages\django\test\client.py", line 1090, in 
+request
+    self.check_exception(response)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "<python>\Lib\site-packages\django\test\client.py", line 805, in 
+check_exception
+    raise exc_value
+  File "<python>\Lib\site-packages\django\core\handlers\exception.py", 
+line 55, in inner
+    response = get_response(request)
+  File "<python>\Lib\site-packages\django\core\handlers\base.py", line 
+198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "<python>\Lib\site-packages\django\views\decorators\csrf.py", 
+line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\viewsets.py", line 
+124, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 509, 
+in dispatch
+    response = self.handle_exception(exc)
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 469, 
+in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 480, 
+in raise_uncaught_exception
+    raise exc
+  File "<python>\Lib\site-packages\rest_framework\views.py", line 506, 
+in dispatch
+    response = handler(request, *args, **kwargs)
+  File "<python>\Lib\site-packages\rest_framework\mixins.py", line 20, 
+in create
+    headers = self.get_success_headers(serializer.data)
+                                       ^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+571, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+249, in data
+    self._data = self.to_representation(self.instance)
+                 ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\serializers.py", line 
+538, in to_representation
+    ret[field.field_name] = field.to_representation(attribute)
+                            ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "<python>\Lib\site-packages\rest_framework\fields.py", line 1272, 
+in to_representation
+    assert not isinstance(value, datetime.datetime), (
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Expected a `date`, but got a `datetime`. Refusing to coerce, as this may mean losing timezone 
+information. Use a custom read-only field and deal with timezone issues explicitly.
+
+  Applying token_blacklist.0012_alter_outstandingtoken_user... OK
+System check identified no issues (0 silenced).
+----------------------------------------------------------------------
+Ran 110 tests in 78.280s
+
+FAILED (failures=13, errors=2)
+Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+

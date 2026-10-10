@@ -12,6 +12,7 @@
     });
 
     const rol = API.rol();
+    const esc = API.esc;
     document.getElementById('usuarioActivo').textContent = sessionStorage.getItem('nombre');
     document.getElementById('rolActivo').textContent = rol.toUpperCase();
 
@@ -179,7 +180,7 @@
             }
             let html = '<table class="tabla-sistema"><thead><tr><th>Fecha</th><th>Hora</th><th>Expediente</th><th>Paciente</th><th>Especialidad</th><th>Médico</th><th>Estado</th></tr></thead><tbody>';
             lista.forEach(function(c) {
-                html += '<tr><td>' + c.fecha + '</td><td>' + (c.hora || '').slice(0, 5) + '</td><td>' + (c.numero_expediente || '') + '</td><td>' + (c.paciente_nombre || '') + '</td><td>' + c.especialidad + '</td><td>' + (c.medico_nombre || '—') + '</td><td>' + c.estado + '</td></tr>';
+                html += '<tr><td>' + esc(c.fecha) + '</td><td>' + esc((c.hora || '').slice(0, 5)) + '</td><td>' + esc(c.numero_expediente) + '</td><td>' + esc(c.paciente_nombre) + '</td><td>' + esc(c.especialidad) + '</td><td>' + esc(c.medico_nombre || '—') + '</td><td>' + esc(c.estado) + '</td></tr>';
             });
             html += '</tbody></table><p class="texto-ayuda mt-2">Total: ' + lista.length + ' cita(s)</p>';
             div.innerHTML = html;
@@ -190,6 +191,9 @@
         const inp = document.getElementById('archivoRegistroFecha');
         if (inp && !inp.value) inp.value = hoyISO();
         aplicarLimitesFechas();
+        if (inp && inp.value && inp.dispatchEvent) {
+            inp.dispatchEvent(new Event('change'));
+        }
     }
 
     const btnArchivoReg = document.getElementById('btnArchivoImprimirRegistro');
@@ -209,10 +213,10 @@
             if (!f) return;
             try {
                 const data = await API.get('/registro-diario/?fecha=' + f);
-                let html = '<p>Total pacientes: ' + (data.registro?.total_pacientes || 0) + '</p>';
-                html += '<table class="tabla-sistema"><thead><tr><th>#</th><th>Expediente</th><th>Paciente</th><th>Especialidad</th></tr></thead><tbody>';
+                let html = '<p>Total pacientes: ' + esc(data.registro?.total_pacientes || 0) + '</p>';
+                html += '<table class="tabla-sistema"><thead><tr><th>#</th><th>Hora</th><th>Expediente</th><th>Paciente</th><th>Especialidad</th><th>Médico</th><th>Estado</th></tr></thead><tbody>';
                 (data.detalles || []).forEach(function(d) {
-                    html += '<tr><td>' + d.orden + '</td><td>' + d.expediente + '</td><td>' + d.paciente_nombre + '</td><td>' + (d.especialidad || '') + '</td></tr>';
+                    html += '<tr><td>' + esc(d.orden) + '</td><td>' + esc(d.hora || '—') + '</td><td>' + esc(d.expediente) + '</td><td>' + esc(d.paciente_nombre) + '</td><td>' + esc(d.especialidad) + '</td><td>' + esc(d.medico || '—') + '</td><td>' + esc(d.estado) + '</td></tr>';
                 });
                 html += '</tbody></table>';
                 document.getElementById('archivoRegistroVista').innerHTML = html || '<p>Sin pacientes en este día</p>';
@@ -387,7 +391,7 @@
         }
         let html = '<table class="tabla-sistema"><thead><tr><th>Fecha</th><th>Hora</th><th>Especialidad</th><th>Médico</th><th>Estado</th></tr></thead><tbody>';
         lista.forEach(function(c) {
-            html += '<tr><td>' + c.fecha + '</td><td>' + (c.hora || '').slice(0, 5) + '</td><td>' + c.especialidad + '</td><td>' + (c.medico_nombre || '—') + '</td><td>' + (c.estado || '') + '</td></tr>';
+            html += '<tr><td>' + esc(c.fecha) + '</td><td>' + esc((c.hora || '').slice(0, 5)) + '</td><td>' + esc(c.especialidad) + '</td><td>' + esc(c.medico_nombre || '—') + '</td><td>' + esc(c.estado) + '</td></tr>';
         });
         return html + '</tbody></table>';
     }
@@ -475,12 +479,12 @@
         let html = '<table class="tabla-sistema"><thead><tr><th>Expediente</th><th>Nombre / Edad</th><th>DPI</th><th>Especialidad</th><th>Estado</th><th></th></tr></thead><tbody>';
         lista.forEach(p => {
             const edad = textoEdadPaciente(p);
-            html += '<tr><td>' + p.numero_expediente + '</td>';
-            html += '<td class="celda-nombre-edad"><span class="nombre-linea">' + (p.nombre_completo || '') + '</span><span class="edad-linea">' + edad + '</span></td>';
-            html += '<td>' + p.dpi + '</td><td>' + (p.especialidad||'') + '</td><td>' + (p.estado_paciente||'') + '</td><td>';
-            html += '<button class="btn btn-sm btn-secundario btn-ver" data-id="' + p.id + '">Ver</button> ';
+            html += '<tr><td>' + esc(p.numero_expediente) + '</td>';
+            html += '<td class="celda-nombre-edad"><span class="nombre-linea">' + esc(p.nombre_completo) + '</span><span class="edad-linea">' + esc(edad) + '</span></td>';
+            html += '<td>' + esc(p.dpi) + '</td><td>' + esc(p.especialidad) + '</td><td>' + esc(p.estado_paciente) + '</td><td>';
+            html += '<button class="btn btn-sm btn-secundario btn-ver" data-id="' + esc(p.id) + '">Ver</button> ';
             if (!soloLectura && (rol === 'registros' || rol === 'admin')) {
-                html += '<button class="btn btn-sm btn-primario btn-editar" data-id="' + p.id + '">Editar</button>';
+                html += '<button class="btn btn-sm btn-primario btn-editar" data-id="' + esc(p.id) + '">Editar</button>';
             }
             html += '</td></tr>';
         });
@@ -793,10 +797,10 @@
         }
         let html = '<table class="tabla-sistema"><thead><tr><th>Fecha</th><th>Hora</th><th>Expediente</th><th>Paciente</th><th>Especialidad</th><th>Médico</th><th>Estado</th><th></th></tr></thead><tbody>';
         lista.forEach(function(c) {
-            html += '<tr><td>' + c.fecha + '</td><td>' + (c.hora || '').slice(0, 5) + '</td><td>' + (c.numero_expediente || '') + '</td><td>' + (c.paciente_nombre || '') + '</td><td>' + c.especialidad + '</td><td>' + (c.medico_nombre || '—') + '</td><td>' + c.estado + '</td><td>';
+            html += '<tr><td>' + esc(c.fecha) + '</td><td>' + esc((c.hora || '').slice(0, 5)) + '</td><td>' + esc(c.numero_expediente) + '</td><td>' + esc(c.paciente_nombre) + '</td><td>' + esc(c.especialidad) + '</td><td>' + esc(c.medico_nombre || '—') + '</td><td>' + esc(c.estado) + '</td><td>';
             if (rol === 'registros' || rol === 'admin') {
-                html += '<button type="button" class="btn btn-sm btn-secundario btn-editar-cita" data-id="' + c.id + '">Editar</button> ';
-                html += '<button type="button" class="btn btn-sm btn-peligro btn-borrar-cita" data-id="' + c.id + '">Eliminar</button>';
+                html += '<button type="button" class="btn btn-sm btn-secundario btn-editar-cita" data-id="' + esc(c.id) + '">Editar</button> ';
+                html += '<button type="button" class="btn btn-sm btn-peligro btn-borrar-cita" data-id="' + esc(c.id) + '">Eliminar</button>';
             }
             html += '</td></tr>';
         });
@@ -879,10 +883,10 @@
         const f = document.getElementById('fechaDiario').value || hoyISO();
         document.getElementById('fechaDiario').value = f;
         const data = await API.get('/registro-diario/?fecha=' + f);
-        let html = '<p>Total: ' + (data.registro?.total_pacientes || 0) + '</p>';
-        html += '<table class="tabla-sistema"><thead><tr><th>#</th><th>Expediente</th><th>Paciente</th></tr></thead><tbody>';
+        let html = '<p>Total: ' + esc(data.registro?.total_pacientes || 0) + '</p>';
+        html += '<table class="tabla-sistema"><thead><tr><th>#</th><th>Hora</th><th>Expediente</th><th>Paciente</th><th>Especialidad</th><th>Médico</th><th>Estado</th></tr></thead><tbody>';
         (data.detalles || []).forEach(d => {
-            html += '<tr><td>' + d.orden + '</td><td>' + d.expediente + '</td><td>' + d.paciente_nombre + '</td></tr>';
+            html += '<tr><td>' + esc(d.orden) + '</td><td>' + esc(d.hora || '—') + '</td><td>' + esc(d.expediente) + '</td><td>' + esc(d.paciente_nombre) + '</td><td>' + esc(d.especialidad) + '</td><td>' + esc(d.medico || '—') + '</td><td>' + esc(d.estado) + '</td></tr>';
         });
         html += '</tbody></table>';
         document.getElementById('detalleDiario').innerHTML = html;
@@ -910,13 +914,13 @@
         html += tablaDesdeLista(data.pacientes_por_especialidad, ['especialidad','total']);
         html += '<h3>Pacientes por estado</h3>';
         html += tablaDesdeLista(data.pacientes_por_estado, ['estado_paciente','total']);
-        html += '<h3>Consultas del mes ' + (data.mes || mes) + '</h3>';
+        html += '<h3>Consultas del mes ' + esc(data.mes || mes) + '</h3>';
         html += tablaDesdeLista(data.consultas_mes, ['especialidad','total']);
         html += '<h3>Citas por especialidad</h3>';
         html += tablaDesdeLista(data.citas_por_especialidad, ['especialidad','total']);
         html += '<h3>Citas por estado</h3>';
         html += tablaDesdeLista(data.citas_por_estado, ['estado','total']);
-        html += '<h3>Citas del mes ' + (data.mes || mes) + '</h3>';
+        html += '<h3>Citas del mes ' + esc(data.mes || mes) + '</h3>';
         html += tablaDesdeLista(data.citas_mes, ['especialidad','total']);
         document.getElementById('tablasEstadistica').innerHTML = html;
     }
@@ -924,11 +928,11 @@
     function tablaDesdeLista(lista, cols) {
         if (!lista || !lista.length) return '<p>Sin datos</p>';
         let h = '<table class="tabla-sistema"><thead><tr>';
-        cols.forEach(c => h += '<th>' + c + '</th>');
+        cols.forEach(c => h += '<th>' + esc(c) + '</th>');
         h += '</tr></thead><tbody>';
         lista.forEach(row => {
             h += '<tr>';
-            cols.forEach(c => h += '<td>' + (row[c] ?? '—') + '</td>');
+            cols.forEach(c => h += '<td>' + esc(row[c] ?? '—') + '</td>');
             h += '</tr>';
         });
         return h + '</tbody></table>';
@@ -955,7 +959,7 @@
         if (!lista || !lista.length) return '<p class="texto-ayuda">' + vacio + '</p>';
         let html = '<table class="tabla-sistema"><thead><tr><th>Fecha</th><th>Hora</th><th>Especialidad</th><th>Médico que atendió</th><th>Estado</th></tr></thead><tbody>';
         lista.forEach(function(c) {
-            html += '<tr><td>' + c.fecha + '</td><td>' + (c.hora || '').slice(0, 5) + '</td><td>' + (c.especialidad || '') + '</td><td>' + (c.medico_nombre || '—') + '</td><td>' + (c.estado || '') + '</td></tr>';
+            html += '<tr><td>' + esc(c.fecha) + '</td><td>' + esc((c.hora || '').slice(0, 5)) + '</td><td>' + esc(c.especialidad) + '</td><td>' + esc(c.medico_nombre || '—') + '</td><td>' + esc(c.estado) + '</td></tr>';
         });
         return html + '</tbody></table>';
     }
@@ -973,20 +977,20 @@
         } else {
             let html = '<table class="tabla-sistema"><thead><tr><th>Fecha</th><th>Nota</th><th>Autor</th><th>Estado</th><th></th></tr></thead><tbody>';
             notas.forEach(function(n) {
-                html += '<tr><td>' + (n.creado || '').replace('T', ' ').slice(0, 16) + '</td>';
-                html += '<td>' + String(n.texto || '').replace(/</g, '&lt;') + '</td>';
-                html += '<td>' + (n.creado_por || '') + '</td>';
+                html += '<tr><td>' + esc((n.creado || '').replace('T', ' ').slice(0, 16)) + '</td>';
+                html += '<td>' + esc(n.texto) + '</td>';
+                html += '<td>' + esc(n.creado_por) + '</td>';
                 if (n.lista) {
                     html += '<td>Lista (no se puede modificar)</td><td></td></tr>';
                 } else {
                     html += '<td>Borrador</td><td>';
-                    html += '<button type="button" class="btn btn-sm btn-secundario btn-editar-nota-vas" data-id="' + n.id + '">Modificar borrador</button> ';
-                    html += '<button type="button" class="btn btn-sm btn-primario btn-confirmar-nota-vas" data-id="' + n.id + '">Confirmar que está lista</button>';
+                    html += '<button type="button" class="btn btn-sm btn-secundario btn-editar-nota-vas" data-id="' + esc(n.id) + '">Modificar borrador</button> ';
+                    html += '<button type="button" class="btn btn-sm btn-primario btn-confirmar-nota-vas" data-id="' + esc(n.id) + '">Confirmar que está lista</button>';
                     html += '</td></tr>';
-                    html += '<tr class="oculto" id="editarNotaVAS-' + n.id + '"><td colspan="5">';
-                    html += '<textarea class="form-control mb-2" id="textoNotaVAS-' + n.id + '" rows="3">' + String(n.texto || '').replace(/</g, '&lt;') + '</textarea>';
-                    html += '<button type="button" class="btn btn-sm btn-primario btn-guardar-nota-vas" data-id="' + n.id + '">Guardar borrador</button> ';
-                    html += '<button type="button" class="btn btn-sm btn-secundario btn-cancelar-nota-vas" data-id="' + n.id + '">Cancelar</button>';
+                    html += '<tr class="oculto" id="editarNotaVAS-' + esc(n.id) + '"><td colspan="5">';
+                    html += '<textarea class="form-control mb-2" id="textoNotaVAS-' + esc(n.id) + '" rows="3">' + esc(n.texto) + '</textarea>';
+                    html += '<button type="button" class="btn btn-sm btn-primario btn-guardar-nota-vas" data-id="' + esc(n.id) + '">Guardar borrador</button> ';
+                    html += '<button type="button" class="btn btn-sm btn-secundario btn-cancelar-nota-vas" data-id="' + esc(n.id) + '">Cancelar</button>';
                     html += '</td></tr>';
                 }
             });
@@ -1054,9 +1058,9 @@
         }
         let html = '<table class="tabla-sistema"><thead><tr><th>No. registro</th><th>Paciente</th><th>DPI</th><th>Estado</th><th></th></tr></thead><tbody>';
         lista.forEach(function(p) {
-            html += '<tr><td>' + (p.numero_expediente || '') + '</td><td>' + (p.nombre_completo || '') + '</td><td>' + (p.dpi || '') + '</td><td>' + (p.estado_paciente || '') + '</td><td>';
-            html += '<button type="button" class="btn btn-sm btn-secundario btn-ver-vas" data-id="' + p.id + '">Ver</button> ';
-            html += '<button type="button" class="btn btn-sm btn-primario btn-notas-vas" data-id="' + p.id + '">Notas</button>';
+            html += '<tr><td>' + esc(p.numero_expediente) + '</td><td>' + esc(p.nombre_completo) + '</td><td>' + esc(p.dpi) + '</td><td>' + esc(p.estado_paciente) + '</td><td>';
+            html += '<button type="button" class="btn btn-sm btn-secundario btn-ver-vas" data-id="' + esc(p.id) + '">Ver</button> ';
+            html += '<button type="button" class="btn btn-sm btn-primario btn-notas-vas" data-id="' + esc(p.id) + '">Notas</button>';
             html += '</td></tr>';
         });
         html += '</tbody></table>';
@@ -1114,13 +1118,13 @@
         }
         let html = '<table class="tabla-sistema"><thead><tr><th>Nombre</th><th>Especialidad</th><th>Activo</th><th></th></tr></thead><tbody>';
         lista.forEach(function(m) {
-            html += '<tr><td>' + m.nombre + '</td><td>' + m.especialidad + '</td><td>' + (m.activo ? 'Sí' : 'No') + '</td><td>';
+            html += '<tr><td>' + esc(m.nombre) + '</td><td>' + esc(m.especialidad) + '</td><td>' + esc(m.activo ? 'Sí' : 'No') + '</td><td>';
             if (m.activo) {
-                html += '<button type="button" class="btn btn-sm btn-secundario btn-desactivar-medico" data-id="' + m.id + '">Desactivar</button>';
+                html += '<button type="button" class="btn btn-sm btn-secundario btn-desactivar-medico" data-id="' + esc(m.id) + '">Desactivar</button>';
             } else {
-                html += '<button type="button" class="btn btn-sm btn-primario btn-activar-medico" data-id="' + m.id + '">Activar</button>';
+                html += '<button type="button" class="btn btn-sm btn-primario btn-activar-medico" data-id="' + esc(m.id) + '">Activar</button>';
             }
-            html += ' <button type="button" class="btn btn-sm btn-peligro btn-borrar-medico" data-id="' + m.id + '">Eliminar</button>';
+            html += ' <button type="button" class="btn btn-sm btn-peligro btn-borrar-medico" data-id="' + esc(m.id) + '">Eliminar</button>';
             html += '</td></tr>';
         });
         html += '</tbody></table>';
@@ -1231,7 +1235,7 @@
             html += '</tbody></table>';
             div.innerHTML = html;
         } catch (e) {
-            div.innerHTML = '<p class="texto-error">Error al leer datos: ' + (e.message || '') + '</p>';
+            div.innerHTML = '<p class="texto-error">Error al leer datos: ' + esc(e.message) + '</p>';
         }
     }
 
@@ -1242,15 +1246,15 @@
         let html = '<table class="tabla-sistema"><thead><tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>';
         lista.forEach(function(u) {
             const esYo = miId && String(u.id) === String(miId);
-            html += '<tr><td>' + u.username + '</td><td>' + u.rol + '</td><td>' + (u.estado || '') + '</td><td class="celda-acciones-usuario">';
-            html += '<button type="button" class="btn btn-sm btn-secundario btn-ver-usuario" data-id="' + u.id + '">Ver datos</button> ';
+            html += '<tr><td>' + esc(u.username) + '</td><td>' + esc(u.rol) + '</td><td>' + esc(u.estado) + '</td><td class="celda-acciones-usuario">';
+            html += '<button type="button" class="btn btn-sm btn-secundario btn-ver-usuario" data-id="' + esc(u.id) + '">Ver datos</button> ';
             if (!esYo) {
                 if (u.estado === 'Activo') {
-                    html += '<button type="button" class="btn btn-sm btn-peligro btn-bloquear-usuario" data-id="' + u.id + '" data-nombre="' + u.username + '">Bloquear</button> ';
+                    html += '<button type="button" class="btn btn-sm btn-peligro btn-bloquear-usuario" data-id="' + esc(u.id) + '" data-nombre="' + esc(u.username) + '">Bloquear</button> ';
                 } else {
-                    html += '<button type="button" class="btn btn-sm btn-primario btn-reactivar-usuario" data-id="' + u.id + '">Reactivar</button> ';
+                    html += '<button type="button" class="btn btn-sm btn-primario btn-reactivar-usuario" data-id="' + esc(u.id) + '">Reactivar</button> ';
                 }
-                html += '<button type="button" class="btn btn-sm btn-peligro btn-eliminar-usuario" data-id="' + u.id + '" data-nombre="' + u.username + '">Eliminar</button>';
+                html += '<button type="button" class="btn btn-sm btn-peligro btn-eliminar-usuario" data-id="' + esc(u.id) + '" data-nombre="' + esc(u.username) + '">Eliminar</button>';
             } else {
                 html += '<span class="texto-ayuda">(su cuenta)</span>';
             }
@@ -1349,7 +1353,7 @@
         }
         let html = '<table class="tabla-sistema"><thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Detalle</th></tr></thead><tbody>';
         lista.forEach(function(b) {
-            html += '<tr><td>' + b.fecha + '</td><td>' + b.usuario + '</td><td>' + b.accion + '</td><td>' + (b.detalle || '') + '</td></tr>';
+            html += '<tr><td>' + esc(b.fecha) + '</td><td>' + esc(b.usuario) + '</td><td>' + esc(b.accion) + '</td><td>' + esc(b.detalle) + '</td></tr>';
         });
         html += '</tbody></table>';
         document.getElementById('listaBitacora').innerHTML = html;
